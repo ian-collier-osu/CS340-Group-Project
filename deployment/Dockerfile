@@ -14,4 +14,5 @@ COPY app /cs340-proj/app
 WORKDIR /cs340-proj/app
 RUN npm install
 
+
 EXPOSE 80

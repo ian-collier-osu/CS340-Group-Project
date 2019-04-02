@@ -15,12 +15,33 @@ var mysql = require('mysql');
 var con = mysql.createConnection({
   host: "localhost",
   user: "docker",
-  password: ""
+  password: "",
+  database: "main"
 });
 
 con.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
+});
+
+con.query("DROP TABLE IF EXISTS diagnostic;", function (err, result) {
+    if (err) throw err;
+    console.log("Result: " + result);
+});
+
+con.query("CREATE TABLE diagnostic(id INT PRIMARY KEY, text VARCHAR(255) NOT NULL);", function (err, result) {
+    if (err) throw err;
+    console.log("Result: " + result);
+});
+
+con.query('INSERT INTO diagnostic (text) VALUES ("MySQL is working");', function (err, result) {
+    if (err) throw err;
+    console.log("Result: " + result);
+});
+
+con.query("SELECT * FROM diagnostic;", function (err, result) {
+    if (err) throw err;
+    console.log("Result: " + result);
 });
 
 /* Routes */
