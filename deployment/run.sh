@@ -12,7 +12,7 @@ build() {
 }
 
 run() {
-	docker run -it cs340-proj:latest
+	docker run -p 8000:80 -it cs340-proj:latest
 }
 
 deploy() {

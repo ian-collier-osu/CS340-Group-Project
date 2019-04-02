@@ -5,7 +5,6 @@ var express = require('express');
 var app = express();
 app.set('port', 80);
 
-// Parser for post body
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -29,8 +28,10 @@ con.connect(function(err) {
 // Static file serving
 app.use('/public', express.static('public'));
 
-app.get('/',function(req,res){
-    res.send(200);
+// Don't delete this, for testing
+app.get('/Test',function(req,res){
+    console.log("Test request receieved.");
+    res.sendStatus(200);
 });
 
 /* Start webserver */
