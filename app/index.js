@@ -24,25 +24,10 @@ con.connect(function(err) {
   console.log("Connected!");
 });
 
-con.query("DROP TABLE IF EXISTS diagnostic;", function (err, result) {
-    if (err) throw err;
-    console.log("Result: " + result);
+con.on('enqueue', function (sequence) {
+  console.log(sequence.sql);
 });
 
-con.query("CREATE TABLE diagnostic(id INT PRIMARY KEY, text VARCHAR(255) NOT NULL);", function (err, result) {
-    if (err) throw err;
-    console.log("Result: " + result);
-});
-
-con.query('INSERT INTO diagnostic (text) VALUES ("MySQL is working");', function (err, result) {
-    if (err) throw err;
-    console.log("Result: " + result);
-});
-
-con.query("SELECT * FROM diagnostic;", function (err, result) {
-    if (err) throw err;
-    console.log("Result: " + result);
-});
 
 /* Routes */
 
@@ -52,6 +37,30 @@ app.use('/public', express.static('public'));
 // Don't delete this, for testing
 app.get('/Test',function(req,res){
     console.log("Test request receieved.");
+    res.sendStatus(200);
+});
+
+// Don't delete this, for testing
+app.get('/TestDB',function(req,res){
+    var query = con.query("DROP TABLE IF EXISTS diagnostic;", function (err, result) {
+        if (err) throw err;
+    });
+
+    con.query("CREATE TABLE diagnostic(id INT PRIMARY KEY, text VARCHAR(255) NOT NULL);", function (err, result) {
+        if (err) throw err;
+    });
+
+    con.query('INSERT INTO diagnostic (text) VALUES ("MySQL is working");', function (err, result) {
+        if (err) throw err;
+    });
+
+    con.query("SELECT * FROM diagnostic;", function (err, result) {
+        if (err) throw err;
+        Object.keys(result).forEach(function(key) {
+            var row = result[key];
+            console.log(row)
+        });
+    });
     res.sendStatus(200);
 });
 
