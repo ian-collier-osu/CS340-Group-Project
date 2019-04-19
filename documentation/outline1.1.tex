@@ -1,8 +1,16 @@
-
-
-\documentclass{article}
-\usepackage{tikz}
-\usepackage[margin=.8in]{geometry}
+\documentclass[11pt,letterpaper,oneside]{amsart}
+\usepackage{fancyhdr}
+%\usepackage[headings]{fullpage}
+\usepackage{graphicx,subfigure}
+\usepackage{wrapfig}
+\usepackage{amssymb,amsmath,latexsym,wasysym,mathrsfs,amsfonts,amsthm}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{color}
+\usepackage{multirow}       %Needed for spanning rows
+\usepackage{listings}
+\usepackage{algorithmic}
 
 \begin{document}
 
@@ -185,5 +193,18 @@ Each order must have exactly one Trimline specified.  Any number of orders can s
 \subsection*{Orders need Colors}
 
 Each order must specify a Color which must be available for the Model associated with the Trimline specified in the order.  An order which specifies an invalid combination should be rejected.  A Color, of course, may be associated with any number of orders.  This is a many-to-one relationship.
+
+\section*{Entity Relationship Diagram}
+
+\begin{figure}[H]
+	\centerline{\includegraphics[scale=.7]{erddraft.png}}
+\end{figure}
+
+\section*{Schema}
+
+\begin{figure}[H]
+	\centerline{\includegraphics[scale=.55]{schema-draft.png}}
+\end{figure}
+
 
 \end{document}
