@@ -16,14 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `automotive`
---
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `automotive` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
-
-USE `automotive`;
-
---
 -- Table structure for table `colors`
 --
 
@@ -35,6 +27,16 @@ CREATE TABLE `colors` (
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `colors`
+--
+
+LOCK TABLES `colors` WRITE;
+/*!40000 ALTER TABLE `colors` DISABLE KEYS */;
+INSERT INTO `colors` VALUES ('Blue'),('Burnt Umber'),('Green'),('Ineffable Chartreuse'),('Infrared'),('Red'),('Taupe');
+/*!40000 ALTER TABLE `colors` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `model_colors`
@@ -54,6 +56,16 @@ CREATE TABLE `model_colors` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `model_colors`
+--
+
+LOCK TABLES `model_colors` WRITE;
+/*!40000 ALTER TABLE `model_colors` DISABLE KEYS */;
+INSERT INTO `model_colors` VALUES ('Burnt Umber',1),('Green',1),('Infrared',1);
+/*!40000 ALTER TABLE `model_colors` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `models`
 --
 
@@ -68,8 +80,18 @@ CREATE TABLE `models` (
   UNIQUE KEY `name` (`name`),
   KEY `base_trimline` (`base_trimline`),
   CONSTRAINT `models_ibfk_1` FOREIGN KEY (`base_trimline`) REFERENCES `trimline` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `models`
+--
+
+LOCK TABLES `models` WRITE;
+/*!40000 ALTER TABLE `models` DISABLE KEYS */;
+INSERT INTO `models` VALUES (1,'Outdoorsy Metaphor',NULL);
+/*!40000 ALTER TABLE `models` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `orders`
@@ -79,15 +101,25 @@ DROP TABLE IF EXISTS `orders`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `orders` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `customer` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `trimline` int(11) NOT NULL,
   `color` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `trimline` (`trimline`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`trimline`) REFERENCES `trimlines` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `orders`
+--
+
+LOCK TABLES `orders` WRITE;
+/*!40000 ALTER TABLE `orders` DISABLE KEYS */;
+INSERT INTO `orders` VALUES (1,'Normal Human',1,'Infrared');
+/*!40000 ALTER TABLE `orders` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `part_requirements`
@@ -101,6 +133,7 @@ CREATE TABLE `part_requirements` (
   `associated_model` int(11) DEFAULT NULL,
   `associated_trimline` int(11) DEFAULT NULL,
   `associated_part` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `associated_trimline` (`associated_trimline`),
   KEY `associated_model` (`associated_model`),
@@ -109,8 +142,18 @@ CREATE TABLE `part_requirements` (
   CONSTRAINT `part_requirements_ibfk_2` FOREIGN KEY (`associated_model`) REFERENCES `models` (`id`),
   CONSTRAINT `part_requirements_ibfk_3` FOREIGN KEY (`associated_part`) REFERENCES `parts` (`id`),
   CONSTRAINT `CONSTRAINT_1` CHECK (`associated_model` is not null or `associated_trimline` is not null)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `part_requirements`
+--
+
+LOCK TABLES `part_requirements` WRITE;
+/*!40000 ALTER TABLE `part_requirements` DISABLE KEYS */;
+INSERT INTO `part_requirements` VALUES (1,1,NULL,2,4),(2,1,NULL,1,1);
+/*!40000 ALTER TABLE `part_requirements` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `parts`
@@ -125,8 +168,18 @@ CREATE TABLE `parts` (
   `quantity_on_hand` int(11) NOT NULL,
   `cost` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `parts`
+--
+
+LOCK TABLES `parts` WRITE;
+/*!40000 ALTER TABLE `parts` DISABLE KEYS */;
+INSERT INTO `parts` VALUES (1,'Roland LAPC-I',0,100),(2,'Pimaster 9000 Wheel',2,300);
+/*!40000 ALTER TABLE `parts` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `trimlines`
@@ -146,8 +199,18 @@ CREATE TABLE `trimlines` (
   KEY `default_color` (`default_color`),
   CONSTRAINT `trimlines_ibfk_1` FOREIGN KEY (`model`) REFERENCES `models` (`id`),
   CONSTRAINT `trimlines_ibfk_2` FOREIGN KEY (`default_color`) REFERENCES `colors` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `trimlines`
+--
+
+LOCK TABLES `trimlines` WRITE;
+/*!40000 ALTER TABLE `trimlines` DISABLE KEYS */;
+INSERT INTO `trimlines` VALUES (1,'Weekdayer',1,'Ineffable Chartreuse');
+/*!40000 ALTER TABLE `trimlines` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -158,4 +221,4 @@ CREATE TABLE `trimlines` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-04-30 21:46:24
+-- Dump completed on 2019-05-01 12:44:16
