@@ -50,8 +50,8 @@ CREATE TABLE `model_colors` (
   `model` int(11) NOT NULL,
   PRIMARY KEY (`color`,`model`),
   KEY `model` (`model`),
-  CONSTRAINT `model_colors_ibfk_1` FOREIGN KEY (`color`) REFERENCES `colors` (`name`),
-  CONSTRAINT `model_colors_ibfk_2` FOREIGN KEY (`model`) REFERENCES `models` (`id`)
+  CONSTRAINT `model_colors_ibfk_1` FOREIGN KEY (`color`) REFERENCES `colors` (`name`) ON DELETE CASCADE,
+  CONSTRAINT `model_colors_ibfk_2` FOREIGN KEY (`model`) REFERENCES `models` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -197,8 +197,8 @@ CREATE TABLE `trimlines` (
   UNIQUE KEY `name` (`name`),
   KEY `model` (`model`),
   KEY `default_color` (`default_color`),
-  CONSTRAINT `trimlines_ibfk_1` FOREIGN KEY (`model`) REFERENCES `models` (`id`),
-  CONSTRAINT `trimlines_ibfk_2` FOREIGN KEY (`default_color`) REFERENCES `colors` (`name`)
+  CONSTRAINT `trimlines_ibfk_3` FOREIGN KEY (`model`) REFERENCES `models` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `trimlines_ibfk_4` FOREIGN KEY (`default_color`) REFERENCES `colors` (`name`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -221,4 +221,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-05-01 12:44:16
+-- Dump completed on 2019-05-05 15:45:54
