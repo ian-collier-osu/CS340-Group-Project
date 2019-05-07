@@ -9,3 +9,7 @@ function deletePlaceholder() {
 function savePlaceholder() {
     alert("Not implemented - Will commit changes to DB");
 }
+
+function addPlaceholder() {
+    alert("Not implemented - Will add new row");
+}
