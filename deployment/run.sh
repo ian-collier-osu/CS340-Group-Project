@@ -12,7 +12,11 @@ build() {
 }
 
 run() {
-	docker run -p 8000:8000 -it cs340-proj:latest
+	docker run -p 80:8000 -it cs340-proj:latest
+}
+
+run-headless() {
+	docker run -p 80:8000 -d cs340-proj:latest
 }
 
 deploy() {
@@ -22,6 +26,6 @@ deploy() {
 }
 
 case $1 in
-  build|run|deploy) "$1" ;;
-  *) echo "Usage: ./run.sh [build/run/deploy]" ;;
+  build|run|deploy|run-headless) "$1" ;;
+  *) echo "Usage: ./run.sh [build/run/run-headless/deploy]" ;;
 esac
