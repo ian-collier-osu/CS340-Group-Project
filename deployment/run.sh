@@ -26,6 +26,6 @@ deploy() {
 }
 
 case $1 in
-  build|run|deploy) "$1" ;;
+  build|run|deploy|run-headless) "$1" ;;
   *) echo "Usage: ./run.sh [build/run/run-headless/deploy]" ;;
 esac
