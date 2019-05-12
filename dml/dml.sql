@@ -121,3 +121,21 @@ SELECT o.id, o.customer, m.name, t.name, o.color, SUM(p.cost * pr.quantity) AS p
     INNER JOIN part_requirements pr ON pr.associated_trimline = t.id OR pr.associated_model = m.id
     INNER JOIN parts p ON p.id = pr.associated_part
     HAVING shortfall > 0;
+
+--Search/filter by name.
+
+--Order
+
+SELECT id, customer, trimline, color FROM orders WHERE customer LIKE "%:nameinput%";
+
+--Model
+
+SELECT id, name, base_trimline FROM models where name LIKE "%:nameinput%";
+
+--Trimline
+
+SELECT id, name, model, default_color FROM trimlines where name LIKE "%:nameinput%";
+
+--Part
+
+select id, name, quantity_on_hand, cost FROM parts WHERE name LIKE "%:nameinput%";
