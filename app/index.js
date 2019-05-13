@@ -107,6 +107,11 @@ app.get('/Orders',function(req,res){
     res.render('orders', context);
 });
 
+app.get('/Search', function(req, res){
+  var context = {};
+  res.render('search', context);
+});
+
 /* Error stuff */
 
 app.use(function(req,res){
