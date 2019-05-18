@@ -79,7 +79,7 @@ CREATE TABLE `models` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
   KEY `base_trimline` (`base_trimline`),
-  CONSTRAINT `models_ibfk_1` FOREIGN KEY (`base_trimline`) REFERENCES `trimline` (`id`)
+  CONSTRAINT `models_ibfk_1` FOREIGN KEY (`base_trimline`) REFERENCES `trimlines` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
