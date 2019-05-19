@@ -79,6 +79,23 @@ app.get('/Models',function(req,res,next){
     });
 });
 
+app.put('/Models',function(req,res,next){
+  con.query("INSERT INTO models (name), VALUES (?)", [req.body.name]), function(err, rows)
+  {
+    if (err)
+    {
+      next(err);
+    }
+    con.query("SELECT id, name FROM models", function(err, rows){
+      if (err)
+      {
+        next(err);
+      }
+      res.render('models, rows');
+    });
+  });
+});
+
 app.get('/Trimlines',function(req,res,next){
   con.query("SELECT id, name FROM trimlines", function(err, rows)
   {
