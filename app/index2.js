@@ -180,9 +180,37 @@ app.put('/Parts', function(req, res, next){
   });
 });
 
-app.get('/PartRequirements',function(req,res){
-    var context = {};
-    res.render('part_requirements', context);
+app.get('/PartRequirements', function(req,res, next){
+    con.query("SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
+    \\FROM part_requirements pr
+    \\INNER JOIN trimlines t ON pr.associated_trimline = t.id
+    \\INNER JOIN models m ON pr.associated_trimline = m.id", function (req, res, next){
+      if (err)
+      {
+        next(err);
+      }
+      res.render('part_requirements', rows);
+    });
+});
+
+app.put('/PartRequirements', function(req, res, next){
+  con.query("INSERT INTO part_requirements (quantity, associated_model, associated_trimline)
+  \\VALUES (?, ?, ?)", [req.body.quantity, req.body.associated_model || null, req.body,associated_trimline || null], function(req, res, next){
+    if (err)
+    {
+      next(err);
+    }
+    con.query("SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
+      \\FROM part_requirements pr
+      \\INNER JOIN trimlines t ON pr.associated_trimline = t.// id
+      \\INNER JOIN models m ON pr.associated_trimline = m.id", function (req, res, next){
+      if (err)
+      {
+        next(err);
+      }
+      res.render('part_requirements', rows);
+    });
+  });
 });
 
 /*This will have to take the search info for orders, since the number of orders is
@@ -194,7 +222,13 @@ app.get('/Orders',function(req,res){
 
 //Search an order based on name.
 app.get('/Search', function(req, res, next){
-  con.query("SELECT o.id, o.customer, m.name, t.name, o.color, SUM(p.cost * pr.quantity) AS part_cost FROM orders o INNER JOIN trimlines t ON o.trimline = t.id INNER JOIN models m ON t.model = m.id INNER JOIN part_requirements pr ON pr.associated_trimline = t.id OR pr.associated_model = m.id INNER JOIN parts p ON p.id = pr.associated_part WHERE o.name LIKE '%?%'", [req.body.name], function(err, rows){
+  con.query("SELECT o.id, o.customer, m.name, t.name, o.color, SUM(p.cost * pr.quantity) AS part_cost
+    \\ FROM orders o
+    \\INNER JOIN trimlines t ON o.trimline = t.id
+    \\INNER JOIN models m ON t.model = m.id
+    \\INNER JOIN part_requirements pr ON pr.associated_trimline = t.id OR pr.associated_model = m.id
+    \\INNER JOIN parts p ON p.id = pr.associated_part
+    \\WHERE o.name LIKE '%?%'", [req.body.name], function(err, rows){
       if (err)
       {
         next(err);
