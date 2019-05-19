@@ -180,6 +180,8 @@ app.put('/Parts', function(req, res, next){
   });
 });
 
+//I can add a route for searching parts by name, if desired.  --Mike
+
 app.get('/PartRequirements', function(req,res, next){
     con.query("SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
     \\FROM part_requirements pr
@@ -193,6 +195,8 @@ app.get('/PartRequirements', function(req,res, next){
     });
 });
 
+/*Create a new part_requirement relationship.  The DB will enforce that one of associated_model and associated_trimline must be null, and the other must not be null.
+  It might be good to enforce that in the HTML/JS on the front-end, as well. --Mike */
 app.put('/PartRequirements', function(req, res, next){
   con.query("INSERT INTO part_requirements (quantity, associated_model, associated_trimline)
   \\VALUES (?, ?, ?)", [req.body.quantity, req.body.associated_model || null, req.body,associated_trimline || null], function(req, res, next){
@@ -214,7 +218,7 @@ app.put('/PartRequirements', function(req, res, next){
 });
 
 /*This will have to take the search info for orders, since the number of orders is
-open-ended, so we can't just populate a drop down.*/
+open-ended, so we can't just populate a drop down.  I recommend we nuke this particular route. --Mike*/
 app.get('/Orders',function(req,res){
     var context = {};
     res.render('orders', context);
