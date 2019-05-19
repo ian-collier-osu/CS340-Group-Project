@@ -79,6 +79,7 @@ app.get('/Models',function(req,res,next){
     });
 });
 
+//Add new model; cannot handle base trimline due to foreign key requirement.
 app.put('/Models',function(req,res,next){
   con.query("INSERT INTO models (name), VALUES (?)", [req.body.name]), function(err, rows)
   {
@@ -97,13 +98,29 @@ app.put('/Models',function(req,res,next){
 });
 
 app.get('/Trimlines',function(req,res,next){
-  con.query("SELECT id, name FROM trimlines", function(err, rows)
-  {
-    if(err)
+  con.query("SELECT id, name, model, default_color FROM trimlines", function(err, rows){
+    if (err)
     {
       next(err);
     }
     res.render('trimlines', rows);
+  });
+});
+
+//Create new trimline.
+app.put('/Trimlines',function(req,res,next){
+  con.query("INSERT INTO trimlines (name, model, default_color) VALUES (?, ?, ?)", [req.body.name, req.body.model, req.body.default_color], function(err, rows){
+    if (err)
+    {
+      next(err);
+    }
+    con.query("SELECT id, name, model, default_color FROM trimlines", function(err, rows){
+      if (err)
+      {
+        next(err);
+      }
+      res.render('trimlines', rows);
+    });
   });
 });
 
@@ -118,9 +135,26 @@ app.get('/Colors',function(req,res,next){
   });
 });
 
-app.get('/Parts',function(req,res,context){
-  con.query("SELECT id, name, quantity_on_hand, cost FROM parts", function(err, rows)
-  {
+//Create new color.
+app.put('/Colors', function(req, res, next){
+  con.query("INSERT INTO colors (name) VALUES (?)", [req.body.name], function(err, rows){
+    if (err)
+    {
+      next(err);
+    }
+    con.query("SELECT name FROM colors", function(err, rows){
+      if(err)
+      {
+        next(err);
+      }
+      res.render('colors', rows);
+    });
+  });
+});
+
+
+app.get('/Parts',function(req,res,next){
+  con.query("SELECT id, name, quantity_on_hand, cost FROM parts", function(err, rows){
     if(err)
     {
       next(err);
@@ -129,19 +163,44 @@ app.get('/Parts',function(req,res,context){
   });
 });
 
+//Create new part.
+app.put('/Parts', function(req, res, next){
+  con.query("INSERT INTO parts (name, quantity_on_hand, cost) VALUES (?, ?, ?)", [req.body.name, req.body.quantity_on_hand, req.body.cost || null]", function(err, rows){
+    if(err)
+    {
+      next(err);
+    }
+    con.query("SELECT id, name, quantity_on_hand, cost FROM parts", function(err, rows){
+      if(err)
+      {
+        next(err);
+      }
+      res.render('parts', rows);
+    });
+  });
+});
+
 app.get('/PartRequirements',function(req,res){
     var context = {};
     res.render('part_requirements', context);
 });
 
+/*This will have to take the search info for orders, since the number of orders is
+open-ended, so we can't just populate a drop down.*/
 app.get('/Orders',function(req,res){
     var context = {};
     res.render('orders', context);
 });
 
-app.get('/Search', function(req, res){
-  var context = {};
-  res.render('search', context);
+//Search an order based on name.
+app.get('/Search', function(req, res, next){
+  con.query("SELECT o.id, o.customer, m.name, t.name, o.color, SUM(p.cost * pr.quantity) AS part_cost FROM orders o INNER JOIN trimlines t ON o.trimline = t.id INNER JOIN models m ON t.model = m.id INNER JOIN part_requirements pr ON pr.associated_trimline = t.id OR pr.associated_model = m.id INNER JOIN parts p ON p.id = pr.associated_part WHERE o.name LIKE '%?%'", [req.body.name], function(err, rows){
+      if (err)
+      {
+        next(err);
+      }
+      res.render('search', rows);
+    });
 });
 
 /* Error stuff */
