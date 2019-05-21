@@ -20,21 +20,39 @@ app.use('/public', express.static('public'))
 /* DB init */
 var mysql = require('mysql');
 
-var con = mysql.createConnection({
-  host: "localhost",
-  user: "docker",
-  password: "",
-  database: "main"
-});
+var con;
 
-con.connect(function(err) {
-  if (err) throw err;
-  console.log("Connected!");
-});
+function handleDisconnect() {
+    con = mysql.createConnection({
+      host: "localhost",
+      user: "docker",
+      password: "",
+      database: "main"
+    });
 
-con.on('enqueue', function (sequence) {
-  console.log(sequence.sql);
-});
+  con.connect(function(err) {              // The server is either down
+    if(err) {                                     // or restarting (takes a while sometimes).
+      console.log('error when connecting to db:', err);
+      setTimeout(handleDisconnect, 2000); // We introduce a delay before attempting to reconnect,
+    }                                     // to avoid a hot loop, and to allow our node script to
+  });                                     // process asynchronous requests in the meantime.
+                                          // If you're also serving http, display a 503 error.
+
+  con.on('enqueue', function (sequence) {
+    console.log(sequence.sql);
+  });
+
+  con.on('error', function(err) {
+    console.log('db error', err);
+    if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
+      handleDisconnect();                         // lost due to either server restart, or a
+    } else {                                      // connnection idle timeout (the wait_timeout
+      throw err;                                  // server variable configures this)
+    }
+  });
+}
+
+handleDisconnect();
 
 
 /* Routes */
@@ -78,15 +96,8 @@ app.get('/',function(req,res){
 });
 
 app.get('/CRUDDemo',function(req,res){
-    var context = {
-        tableTitle: "CRUD Editable Table Demo (Work In Progress)"
-    };
-    res.render('table', context);
-});
-
-app.get('/Search',function(req,res){
     var context = {};
-    res.render('search', context);
+    res.render('table', context);
 });
 
 app.get('/Models',function(req,res){
