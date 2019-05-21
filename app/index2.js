@@ -30,6 +30,10 @@ var db_config = {
 
 var con;
 
+//The handleDisconnect() stuff doesn't work with a pool object, which creates and
+//destroys connections for each query, as needed.
+
+/*
 function handleDisconnect() {
   con = mysql.createPool(db_config); // Recreate the connection, since
                                                   // the old one cannot be reused.
@@ -52,6 +56,8 @@ function handleDisconnect() {
 }
 
 handleDisconnect();
+
+*/
 
 /* Routes */
 
@@ -106,7 +112,7 @@ app.get('/Models',function(req,res,next){
 
 //Add new model; cannot handle base trimline due to foreign key requirement.
 app.put('/Models',function(req,res,next){
-  con.query("INSERT INTO models (name), VALUES (?)", [req.body.name]), function(err, rows)
+  con.query("INSERT INTO models (name), VALUES (?)", [req.body.name], function(err, rows)
   {
     if (err)
     {
@@ -117,7 +123,7 @@ app.put('/Models',function(req,res,next){
       {
         next(err);
       }
-      res.render('models, rows');
+      res.render('models', rows);
     });
   });
 });
@@ -190,7 +196,7 @@ app.get('/Parts',function(req,res,next){
 
 //Create new part.
 app.put('/Parts', function(req, res, next){
-  con.query("INSERT INTO parts (name, quantity_on_hand, cost) VALUES (?, ?, ?)", [req.body.name, req.body.quantity_on_hand, req.body.cost || null]", function(err, rows){
+  con.query("INSERT INTO parts (name, quantity_on_hand, cost) VALUES (?, ?, ?)", [req.body.name, req.body.quantity_on_hand, req.body.cost || null], function(err, rows){
     if(err)
     {
       next(err);
@@ -208,10 +214,10 @@ app.put('/Parts', function(req, res, next){
 //I can add a route for searching parts by name, if desired.  --Mike
 
 app.get('/PartRequirements', function(req,res, next){
-    con.query("SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
-    \\FROM part_requirements pr
-    \\INNER JOIN trimlines t ON pr.associated_trimline = t.id
-    \\INNER JOIN models m ON pr.associated_trimline = m.id", function (req, res, next){
+    con.query(`SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
+      FROM part_requirements pr
+      INNER JOIN trimlines t ON pr.associated_trimline = t.id
+      INNER JOIN models m ON pr.associated_trimline = m.id`, function (req, res, next){
       if (err)
       {
         next(err);
@@ -223,16 +229,16 @@ app.get('/PartRequirements', function(req,res, next){
 /*Create a new part_requirement relationship.  The DB will enforce that one of associated_model and associated_trimline must be null, and the other must not be null.
   It might be good to enforce that in the HTML/JS on the front-end, as well. --Mike */
 app.put('/PartRequirements', function(req, res, next){
-  con.query("INSERT INTO part_requirements (quantity, associated_model, associated_trimline)
-  \\VALUES (?, ?, ?)", [req.body.quantity, req.body.associated_model || null, req.body,associated_trimline || null], function(req, res, next){
+  con.query(`INSERT INTO part_requirements (quantity, associated_model, associated_trimline)
+  VALUES (?, ?, ?)`, [req.body.quantity, req.body.associated_model || null, req.body,associated_trimline || null], function(req, res, next){
     if (err)
     {
       next(err);
     }
-    con.query("SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
-      \\FROM part_requirements pr
-      \\INNER JOIN trimlines t ON pr.associated_trimline = t.// id
-      \\INNER JOIN models m ON pr.associated_trimline = m.id", function (req, res, next){
+    con.query(`SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
+      FROM part_requirements pr
+      INNER JOIN trimlines t ON pr.associated_trimline = t.// id
+      INNER JOIN models m ON pr.associated_trimline = m.id`, function (req, res, next){
       if (err)
       {
         next(err);
@@ -251,13 +257,13 @@ app.get('/Orders',function(req,res){
 
 //Search an order based on name.
 app.get('/Search', function(req, res, next){
-  con.query("SELECT o.id, o.customer, m.name, t.name, o.color, SUM(p.cost * pr.quantity) AS part_cost
-    \\ FROM orders o
-    \\INNER JOIN trimlines t ON o.trimline = t.id
-    \\INNER JOIN models m ON t.model = m.id
-    \\INNER JOIN part_requirements pr ON pr.associated_trimline = t.id OR pr.associated_model = m.id
-    \\INNER JOIN parts p ON p.id = pr.associated_part
-    \\WHERE o.name LIKE '%?%'", [req.body.name], function(err, rows){
+  con.query(`SELECT o.id, o.customer, m.name, t.name, o.color, SUM(p.cost * pr.quantity) AS part_cost
+    FROM orders o
+    INNER JOIN trimlines t ON o.trimline = t.id
+    INNER JOIN models m ON t.model = m.id
+    INNER JOIN part_requirements pr ON pr.associated_trimline = t.id OR pr.associated_model = m.id
+    INNER JOIN parts p ON p.id = pr.associated_part
+    WHERE o.name LIKE '%?%'`, [req.body.name], function(err, rows){
       if (err)
       {
         next(err);
