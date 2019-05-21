@@ -39,22 +39,22 @@ const FieldTypeEnum = {
 // Sample page data
 // TODO generate
 var pageData = {
+    tableHeader: ["Id", "Name", "Age"],
     tableContents: [
-        ["Id", "Name", "Age"],
         [0, "foo", 11]
     ],
     tableWidth: 3,
     tableFieldTypes: [
-        [FieldTypeEnum.UNEDITABLE, FieldTypeEnum.UNEDITABLE, FieldTypeEnum.UNEDITABLE],
         [FieldTypeEnum.PRIMARY_KEY, FieldTypeEnum.TEXT, FieldTypeEnum.NUMBER]
     ],
-    rowStates: [RowStateEnum.HEADER, RowStateEnum.UNMODIFIED]
+    rowStates: [RowStateEnum.UNMODIFIED]
 };
 
 // Add button - adds a new row
 
 // Edit button on on a row, while editing
-$(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, function () {
+
+function rowDisableEditing() {
     // Find parent TR
     var row, col;
     $(this).closest('tr').each(function() {
@@ -65,7 +65,7 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, function () {
             col = $(this).index();
             // Make sure we ignore buttons
             if(col < pageData.tableWidth) {
-                $(this).text("test");
+                $(this).text(pageData.tableContents[row][col]);
             }
             // TODO set color class based on status
         });
@@ -74,38 +74,41 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, function () {
     // Set button text and class
     $(this).text(TEXT_EDIT_BUTTON_NOT_EDITING);
     $(this).removeClass(CLASS_EDIT_BUTTON_EDITING).addClass(CLASS_EDIT_BUTTON_NOT_EDITING);
-});
+}
+
+$(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, rowDisableEditing);
 
 // TODO based on row, col
-function getEditableField(strType, defaultValue) {
+function getEditableField(row, col) {
     var $newElem;
+    var fieldType = pageData.tableFieldTypes[row][col];
+    var fieldContent = pageData.tableContents[row][col];
 
     // Do a lookup for the intended type
-    switch(strType) {
+    switch(fieldType) {
         // Text field
         case FieldTypeEnum.TEXT:
-            newElem = $('<input>').attr({
+            $newElem = $('<input>').attr({
                 type: 'text',
-                value: defaultValue
+                value: fieldContent
             });
             break;
         // Number field
         case FieldTypeEnum.NUMBER:
-            newElem = $('<input>').attr({
+            $newElem = $('<input>').attr({
                 type: 'number',
-                value: defaultValue
+                value: fieldContent
             });
             break;
         // TODO Dropdown menu
         case FieldTypeEnum.FOREIGN_KEY:
-            newElem = undefined;
+            $newElem = undefined;
         default:
-            newElem = undefined;
+            $newElem = undefined;
             break;
     }
-    return newElem;
+    return $newElem;
 }
-
 
 // Edit button on on a row, while not editing
 $(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
@@ -120,15 +123,15 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
             // Make sure we ignore buttons
             if(col < pageData.tableWidth) {
                 // Add proper editable field element
-                var $newElem = getEditableField(FieldTypeEnum.TEXT, "test");
-                if (newElem !== undefined) {
+                var $newElem = getEditableField(row, col);
+                if ($newElem !== undefined) {
                     // Clear contents first
                     $(this).empty();
                     // Insert into TD
-                    $(this).append(newElem);
+                    $(this).append($newElem);
                 }
             }
-            //console.log("Edit: (" + row + ", " + col + ")")
+            console.log("Edit: (" + row + ", " + col + ")")
         });
     });
 
@@ -137,16 +140,43 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
 });
 
 // Delete button in row
-$('.' + CLASS_DELETE_BUTTON).click(function () {
+$(document).on('click', '.' + CLASS_DELETE_BUTTON, function () {
+    // End editing if happening on this row
+    $(this).each(rowDisableEditing);
+
+    // Get current row
+    var $thisRow = $(this).closest('tr');
+
+    // Disable edit button in this row
+    $thisRow.find('.' + CLASS_EDIT_BUTTON_NOT_EDITING).attr('disabled', true);
+    $thisRow.find('.' + CLASS_EDIT_BUTTON_EDITING).attr('disabled', true);
+
     // TODO Strikethrough
+
+    // Set row status
+    var rowIndex = $thisRow.index();
+    pageData.rowStates[rowIndex] = RowStateEnum.DELETED;
+
 
     $(this).text(TEXT_DELETE_BUTTON_DELETED);
     $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
 });
 
-// Delete button in row
-$('.' + CLASS_DELETE_BUTTON_DELETED).click(function () {
-    // TODO Strikethrough
+// Undelete button in row
+$(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
+
+    // Get current row
+    var $thisRow = $(this).closest('tr');
+
+    // Enable edit button on this row
+    $thisRow.find('.' + CLASS_EDIT_BUTTON_NOT_EDITING).attr('disabled', false);
+    $thisRow.find('.' + CLASS_EDIT_BUTTON_EDITING).attr('disabled', false);
+
+    // TODO Remove strikethrough
+
+    // Set row status
+    var rowIndex = $thisRow.index();
+    pageData.rowStates[rowIndex] = RowStateEnum.UPDATED;
 
     $(this).text(TEXT_DELETE_BUTTON);
     $(this).removeClass(CLASS_DELETE_BUTTON_DELETED).addClass(CLASS_DELETE_BUTTON);
