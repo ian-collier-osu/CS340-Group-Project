@@ -57,6 +57,18 @@ var pageData = {
 };
 
 $(document).ready(function() {
+    $.ajax({
+        url : '/Models',
+        type : 'GET',
+        success : function(data) {
+            alert('Data: '+data);
+        },
+        error : function(request,error)
+        {
+            alert("Request: "+JSON.stringify(request));
+        }
+    });
+
     populateTable();
 });
 
