@@ -28,7 +28,7 @@ var db_config = {
   database: "automotive"
 };
 
-var con;
+var con = mysql.createPool(db_config);
 
 //The handleDisconnect() stuff doesn't work with a pool object, which creates and
 //destroys connections for each query, as needed.
