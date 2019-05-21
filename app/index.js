@@ -77,6 +77,18 @@ app.get('/',function(req,res){
     res.render('index', context);
 });
 
+app.get('/Testpage',function(req,res){
+    var context = {
+        tableTitle: "Test Table"
+    };
+    res.render('table', context);
+});
+
+app.get('/Search',function(req,res){
+    var context = {};
+    res.render('search', context);
+});
+
 app.get('/Models',function(req,res){
     var context = {};
     res.render('models', context);
