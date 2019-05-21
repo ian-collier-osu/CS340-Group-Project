@@ -77,9 +77,9 @@ app.get('/',function(req,res){
     res.render('index', context);
 });
 
-app.get('/Testpage',function(req,res){
+app.get('/CRUDDemo',function(req,res){
     var context = {
-        tableTitle: "Test Table"
+        tableTitle: "CRUD Editable Table Demo (Work In Progress)"
     };
     res.render('table', context);
 });

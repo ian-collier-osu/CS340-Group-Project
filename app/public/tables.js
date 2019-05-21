@@ -13,8 +13,12 @@ const CLASS_EDIT_BUTTON_NOT_EDITING = "table-row-btn-start-edit";
 const TEXT_DELETE_BUTTON = "Delete";
 const CLASS_DELETE_BUTTON = "table-row-btn-delete";
 
-const TEXT_DELETE_BUTTON_DELETED = "Undelete";
+// TODO fix the undelete
+const TEXT_DELETE_BUTTON_DELETED = "Deleted";
 const CLASS_DELETE_BUTTON_DELETED = "table-row-btn-undelete";
+
+// Editable field marker
+const CLASS_EDITABLE_TABLE_ITEM = "table-item-editable";
 
 // Table buttons
 const CLASS_SAVE_BUTTON = "table-btn-save";
@@ -36,24 +40,96 @@ const FieldTypeEnum = {
     NUMBER: 4
 };
 
+var $TABLE = $('.editable-table');
+
 // Sample page data
 // TODO generate
 var pageData = {
     tableHeader: ["Id", "Name", "Age"],
     tableContents: [
-        [0, "foo", 11]
+        [0, "foo", 11],
+        [1, "Jeff", 22],
+        [2, "Michael", 24]
     ],
     tableWidth: 3,
-    tableFieldTypes: [
-        [FieldTypeEnum.PRIMARY_KEY, FieldTypeEnum.TEXT, FieldTypeEnum.NUMBER]
-    ],
+    tableFieldTypes: [FieldTypeEnum.PRIMARY_KEY, FieldTypeEnum.TEXT, FieldTypeEnum.NUMBER],
     rowStates: [RowStateEnum.UNMODIFIED]
 };
 
-// Add button - adds a new row
+$(document).ready(function() {
+    populateTable();
+});
+
+// Fills in the table from pageData
+function populateTable() {
+    // Clear table
+    $TABLE.empty();
+
+    // Header
+    var $tableHead = $('<thead>');
+    $TABLE.append($tableHead);
+
+    var $newHeader = $('<tr>');
+    for (headerItem of pageData.tableHeader) {
+        var $newHeaderItem = $('<td>')
+            .text(headerItem);
+        $newHeader.append($newHeaderItem);
+    }
+    $tableHead.append($newHeader);
+
+    // Body
+    var $tableBody = $('<tbody>');
+    $TABLE.append($tableBody);
+
+    for (rowData of pageData.tableContents) {
+        var $newRow = $('<tr>');
+        for(colData of rowData) {
+            // Create new data item
+            var $newCol = $('<td>')
+                .text(colData);
+
+            // Append new item to row
+            $newRow.append($newCol);
+        }
+
+        // Create mod buttons
+        var $editBtn = $('<button>')
+            .attr({
+                type: 'button'
+            })
+            .addClass(CLASS_EDIT_BUTTON_NOT_EDITING)
+            .text(TEXT_EDIT_BUTTON_NOT_EDITING);
+
+        var $deleteBtn = $('<button>')
+            .attr({
+                type: 'button'
+            })
+            .addClass(CLASS_DELETE_BUTTON)
+            .text(TEXT_DELETE_BUTTON);
+
+        // Append mod buttons to row
+        $newRow.append($('<td>').append($editBtn));
+        $newRow.append($('<td>').append($deleteBtn));
+
+        // Add row to table body
+        $tableBody.append($newRow);
+    }
+}
+
+// Listen for changes in text fields to update the table contents
+$(document).on('change', '.' + CLASS_EDITABLE_TABLE_ITEM, function() {
+    var row, col;
+
+    row = $(this).closest('tr').index();
+    col = $(this).closest('td').index();
+
+    console.log("Changed: (" + row + ", " + col + ")");
+
+    // TODO test for all field types -- should work for selects as well
+    pageData.tableContents[row][col] = $(this).val();
+});
 
 // Edit button on on a row, while editing
-
 function rowDisableEditing() {
     // Find parent TR
     var row, col;
@@ -81,7 +157,7 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, rowDisableEditing);
 // TODO based on row, col
 function getEditableField(row, col) {
     var $newElem;
-    var fieldType = pageData.tableFieldTypes[row][col];
+    var fieldType = pageData.tableFieldTypes[col];
     var fieldContent = pageData.tableContents[row][col];
 
     // Do a lookup for the intended type
@@ -107,6 +183,7 @@ function getEditableField(row, col) {
             $newElem = undefined;
             break;
     }
+
     return $newElem;
 }
 
@@ -119,6 +196,7 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
         // Change all TD to plain text fields
         $(this).find('td').each (function() {
             col = $(this).index();
+            console.log("Edit: (" + row + ", " + col + ")");
 
             // Make sure we ignore buttons
             if(col < pageData.tableWidth) {
@@ -127,11 +205,14 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
                 if ($newElem !== undefined) {
                     // Clear contents first
                     $(this).empty();
+
+                    // Mark class for edit listener
+                    $newElem.addClass(CLASS_EDITABLE_TABLE_ITEM);
+
                     // Insert into TD
                     $(this).append($newElem);
                 }
             }
-            console.log("Edit: (" + row + ", " + col + ")")
         });
     });
 
