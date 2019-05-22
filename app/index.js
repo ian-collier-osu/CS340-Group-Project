@@ -152,7 +152,7 @@ app.get('/Search', function(req, res){
 /* DB routes */
 
 app.get('/Models',function(req,res,next){
-    con.query("SELECT id, name FROM models", function(err, rows)
+    con.query("SELECT id, name FROM models ORDER BY id", function(err, rows)
     {
       if(err)
       {

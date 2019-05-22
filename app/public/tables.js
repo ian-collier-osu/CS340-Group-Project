@@ -45,31 +45,63 @@ var $TABLE = $('.editable-table');
 // Sample page data
 // TODO generate
 var pageData = {
-    tableHeader: ["Id", "Name", "Age"],
-    tableContents: [
-        [0, "foo", 11],
-        [1, "Jeff", 22],
-        [2, "Michael", 24]
-    ],
-    tableWidth: 3,
-    tableFieldTypes: [FieldTypeEnum.PRIMARY_KEY, FieldTypeEnum.TEXT, FieldTypeEnum.NUMBER],
-    rowStates: [RowStateEnum.UNMODIFIED]
+    tableHeader: [],
+    tableContents: [],
+    tableFieldTypes: [],
+    rowStates: []
 };
+
+function initPageData(getDict) {
+    var i = 0;
+
+    // Populate table headers (temp)
+    if(getDict.length > 0) {
+        for(colFieldName of Object.keys(getDict[0])) {
+            pageData.tableHeader.push(colFieldName);
+        }
+    }
+
+    // Populate table data
+    for(rowObj of getDict) {
+        pageData.rowStates.push(RowStateEnum.UNMODIFIED);
+        pageData.tableContents.push([]);
+        for(colItem of Object.values(rowObj)) {
+            pageData.tableContents[i].push(colItem);
+        }
+        i++;
+    }
+
+    // Set field types
+    if(pageData.tableContents.length > 0) {
+        i = 0;
+        for(colItem of pageData.tableContents[0]) {
+            var fieldType = FieldTypeEnum.UNEDITABLE;
+            if(i == 0) {
+                fieldType = FieldTypeEnum.PRIMARY_KEY;
+            } else if (typeof colItem === 'string' || colItem instanceof String) {
+                fieldType = FieldTypeEnum.TEXT;
+            } else if (typeof colItem == 'number') {
+                fieldType = FieldTypeEnum.NUMBER;
+            }
+            pageData.tableFieldTypes.push(fieldType);
+            i++;
+        }
+    }
+}
 
 $(document).ready(function() {
     $.ajax({
         url : '/Models',
         type : 'GET',
         success : function(data) {
-            alert('Data: '+data);
+            initPageData(data);
+            populateTable();
         },
         error : function(request,error)
         {
-            alert("Request: "+JSON.stringify(request));
+            alert("Failed to load data: "+JSON.stringify(request));
         }
     });
-
-    populateTable();
 });
 
 // Fills in the table from pageData
@@ -152,7 +184,7 @@ function rowDisableEditing() {
             // Set innerhtml to respective text
             col = $(this).index();
             // Make sure we ignore buttons
-            if(col < pageData.tableWidth) {
+            if(col < pageData.tableHeader.length) {
                 $(this).text(pageData.tableContents[row][col]);
             }
             // TODO set color class based on status
@@ -211,7 +243,7 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
             console.log("Edit: (" + row + ", " + col + ")");
 
             // Make sure we ignore buttons
-            if(col < pageData.tableWidth) {
+            if(col < pageData.tableWidth.length) {
                 // Add proper editable field element
                 var $newElem = getEditableField(row, col);
                 if ($newElem !== undefined) {
