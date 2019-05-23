@@ -24,6 +24,10 @@ const CLASS_EDITABLE_TABLE_ITEM = "table-item-editable";
 const CLASS_SAVE_BUTTON = "table-btn-save";
 const CLASS_ADD_BUTTON = "table-btn-add";
 
+// Table decoration classes
+const CLASS_MODIFIED_INDICATOR = "modified-indicator";
+const CLASS_DELETED_INDICATOR = "deleted-indicator";
+
 const RowStateEnum = {
     UNMODIFIED : 0,
     UPDATED : 1,
@@ -89,6 +93,10 @@ function initPageData(getDict) {
     }
 }
 
+function addEmptyRow() {
+    addRow([-1, "foo"]);
+}
+
 $(document).ready(function() {
     $.ajax({
         url : '/Models',
@@ -103,6 +111,40 @@ $(document).ready(function() {
         }
     });
 });
+
+function addRow(rowData) {
+    var $newRow = $('<tr>');
+    for(colData of rowData) {
+        // Create new data item
+        var $newCol = $('<td>')
+            .text(colData);
+
+        // Append new item to row
+        $newRow.append($newCol);
+    }
+
+    // Create mod buttons
+    var $editBtn = $('<button>')
+        .attr({
+            type: 'button'
+        })
+        .addClass(CLASS_EDIT_BUTTON_NOT_EDITING)
+        .text(TEXT_EDIT_BUTTON_NOT_EDITING);
+
+    var $deleteBtn = $('<button>')
+        .attr({
+            type: 'button'
+        })
+        .addClass(CLASS_DELETE_BUTTON)
+        .text(TEXT_DELETE_BUTTON);
+
+    // Append mod buttons to row
+    $newRow.append($('<td>').append($editBtn));
+    $newRow.append($('<td>').append($deleteBtn));
+
+    // Add row to table body
+    $TABLE.find('tbody').append($newRow);
+}
 
 // Fills in the table from pageData
 function populateTable() {
@@ -126,37 +168,7 @@ function populateTable() {
     $TABLE.append($tableBody);
 
     for (rowData of pageData.tableContents) {
-        var $newRow = $('<tr>');
-        for(colData of rowData) {
-            // Create new data item
-            var $newCol = $('<td>')
-                .text(colData);
-
-            // Append new item to row
-            $newRow.append($newCol);
-        }
-
-        // Create mod buttons
-        var $editBtn = $('<button>')
-            .attr({
-                type: 'button'
-            })
-            .addClass(CLASS_EDIT_BUTTON_NOT_EDITING)
-            .text(TEXT_EDIT_BUTTON_NOT_EDITING);
-
-        var $deleteBtn = $('<button>')
-            .attr({
-                type: 'button'
-            })
-            .addClass(CLASS_DELETE_BUTTON)
-            .text(TEXT_DELETE_BUTTON);
-
-        // Append mod buttons to row
-        $newRow.append($('<td>').append($editBtn));
-        $newRow.append($('<td>').append($deleteBtn));
-
-        // Add row to table body
-        $tableBody.append($newRow);
+        addRow(rowData);
     }
 }
 
@@ -164,8 +176,14 @@ function populateTable() {
 $(document).on('change', '.' + CLASS_EDITABLE_TABLE_ITEM, function() {
     var row, col;
 
-    row = $(this).closest('tr').index();
-    col = $(this).closest('td').index();
+    var $thisRow = $(this).closest('tr');
+    var $thisItem = $(this).closest("td");
+
+    // Set cell color
+    $thisItem.addClass(CLASS_MODIFIED_INDICATOR);
+
+    col = $thisItem.index();
+    row = $thisRow.index();
 
     console.log("Changed: (" + row + ", " + col + ")");
 
@@ -243,7 +261,7 @@ $(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
             console.log("Edit: (" + row + ", " + col + ")");
 
             // Make sure we ignore buttons
-            if(col < pageData.tableWidth.length) {
+            if(col < pageData.tableHeader.length) {
                 // Add proper editable field element
                 var $newElem = getEditableField(row, col);
                 if ($newElem !== undefined) {
@@ -271,12 +289,14 @@ $(document).on('click', '.' + CLASS_DELETE_BUTTON, function () {
 
     // Get current row
     var $thisRow = $(this).closest('tr');
+    var $thisItem = $(this).closest('td');
 
     // Disable edit button in this row
     $thisRow.find('.' + CLASS_EDIT_BUTTON_NOT_EDITING).attr('disabled', true);
     $thisRow.find('.' + CLASS_EDIT_BUTTON_EDITING).attr('disabled', true);
 
     // TODO Strikethrough
+    $thisRow.addClass(CLASS_DELETED_INDICATOR);
 
     // Set row status
     var rowIndex = $thisRow.index();
@@ -298,6 +318,7 @@ $(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
     $thisRow.find('.' + CLASS_EDIT_BUTTON_EDITING).attr('disabled', false);
 
     // TODO Remove strikethrough
+    $thisRow.removeClass(CLASS_DELETED_INDICATOR);
 
     // Set row status
     var rowIndex = $thisRow.index();
@@ -309,6 +330,7 @@ $(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
 
 $('.' + CLASS_ADD_BUTTON).click(function () {
     alert("Add button");
+    addEmptyRow();
     // Add a new empty row
 });
 
