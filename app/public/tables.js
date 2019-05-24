@@ -23,6 +23,7 @@ const CLASS_EDITABLE_TABLE_ITEM = "table-item-editable";
 // Table buttons
 const CLASS_SAVE_BUTTON = "table-btn-save";
 const CLASS_ADD_BUTTON = "table-btn-add";
+const CLASS_RELOAD_BUTTON = "table-btn-reload";
 
 // Table decoration classes
 const CLASS_MODIFIED_INDICATOR = "modified-indicator";
@@ -55,7 +56,32 @@ var pageData = {
     rowStates: []
 };
 
+$(document).ready(function() {
+    ajaxRefreshTable();
+});
+
+function ajaxRefreshTable() {
+    $.ajax({
+        url : '/Models',
+        type : 'GET',
+        success : function(data) {
+            initPageData(data);
+            populateTable();
+        },
+        error : function(request,error)
+        {
+            alert("Failed to load data: "+JSON.stringify(request));
+        }
+    });
+}
+
 function initPageData(getDict) {
+    pageData = {
+        tableHeader: [],
+        tableContents: [],
+        tableFieldTypes: [],
+        rowStates: []
+    };
     var i = 0;
 
     // Populate table headers (temp)
@@ -94,23 +120,23 @@ function initPageData(getDict) {
 }
 
 function addEmptyRow() {
-    addRow([-1, "foo"]);
-}
+    var newRowContents = [];
 
-$(document).ready(function() {
-    $.ajax({
-        url : '/Models',
-        type : 'GET',
-        success : function(data) {
-            initPageData(data);
-            populateTable();
-        },
-        error : function(request,error)
-        {
-            alert("Failed to load data: "+JSON.stringify(request));
+    for(fieldType of pageData.tableFieldTypes) {
+        var newRowItem = "?";
+        switch(fieldType) {
+            case FieldTypeEnum.TEXT:
+                newRowItem = "";
+                break;
+            case FieldTypeEnum.NUMBER:
+                newRowItem = 0;
+                break;
         }
-    });
-});
+        newRowContents.push(newRowItem);
+    }
+    pageData.tableContents.push(newRowContents);
+    addRow(newRowContents);
+}
 
 function addRow(rowData) {
     var $newRow = $('<tr>');
@@ -329,9 +355,7 @@ $(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
 });
 
 $('.' + CLASS_ADD_BUTTON).click(function () {
-    alert("Add button");
     addEmptyRow();
-    // Add a new empty row
 });
 
 $('.' + CLASS_SAVE_BUTTON).click(function () {
@@ -339,4 +363,15 @@ $('.' + CLASS_SAVE_BUTTON).click(function () {
     // Make an AJAX request to commit rows to the DB
 });
 
+$('.' + CLASS_RELOAD_BUTTON).click(function () {
+    var c = confirm("This will delete your changes. Are you sure?");
+    if(c) {
+        ajaxRefreshTable();
+    }
+
+    // Make an AJAX request to commit rows to the DB
+});
+
 // TODO Need something to listen for a change in editable field classes to update value in mem and mark color
+
+// TODO new function that takes cell of origin and intended marker -- marks row and sets visuals
