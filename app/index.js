@@ -96,43 +96,88 @@ app.get('/',function(req,res){
 });
 
 app.get('/CRUDDemo',function(req,res){
-    var context = {};
+    var context = {
+        tableTitle: "Test Table"
+    };
     res.render('table', context);
 });
 
-app.get('/Models',function(req,res){
-    var context = {};
+app.get('/ModelsTable',function(req,res){
+    var context = {
+        tableTitle: "Models"
+    };
     res.render('models', context);
 });
 
-app.get('/Trimlines',function(req,res){
-    var context = {};
+app.get('/TrimlinesTable',function(req,res){
+    var context = {
+        tableTitle: "Trimlines"
+    };
     res.render('trimlines', context);
 });
 
-app.get('/Colors',function(req,res){
-    var context = {};
+app.get('/ColorsTable',function(req,res){
+    var context = {
+        tableTitle: "Colors"
+    };
     res.render('colors', context);
 });
 
-app.get('/Parts',function(req,res){
-    var context = {};
+app.get('/PartsTable',function(req,res){
+    var context = {
+        tableTitle: "Parts"
+    };
     res.render('parts', context);
 });
 
-app.get('/PartRequirements',function(req,res){
-    var context = {};
+app.get('/PartRequirementsTable',function(req,res){
+    var context = {
+        tableTitle: "Part Requirements"
+    };
     res.render('part_requirements', context);
 });
 
-app.get('/Orders',function(req,res){
-    var context = {};
+app.get('/OrdersTable',function(req,res){
+    var context = {
+        tableTitle: "Orders"
+    };
     res.render('orders', context);
 });
 
 app.get('/Search', function(req, res){
   var context = {};
   res.render('search', context);
+});
+
+/* DB routes */
+
+app.get('/Models',function(req,res,next){
+    con.query("SELECT id, name FROM models ORDER BY id", function(err, rows)
+    {
+      if(err)
+      {
+        next(err);
+      }
+      res.send(rows);
+    });
+});
+
+//Add new model; cannot handle base trimline due to foreign key requirement.
+app.put('/Models',function(req,res,next){
+  con.query("INSERT INTO models (name), VALUES (?)", [req.body.name], function(err, rows)
+  {
+    if (err)
+    {
+      next(err);
+    }
+    con.query("SELECT id, name FROM models", function(err, rows){
+      if (err)
+      {
+        next(err);
+      }
+      res.send(rows);
+    });
+  });
 });
 
 /* Error stuff */

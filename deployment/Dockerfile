@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y nodejs npm sudo mysql-server
 
 # Copy entrypoints
 COPY deployment/entrypoints /entrypoints
+COPY ddl/ddl.sql /entrypoints
 CMD ["bash", "-C", "/entrypoints/entrypoint.sh"]
 
 # Copy node project files

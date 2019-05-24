@@ -74,7 +74,7 @@ DROP TABLE IF EXISTS `models`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `models` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `base_trimline` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
@@ -90,6 +90,7 @@ CREATE TABLE `models` (
 LOCK TABLES `models` WRITE;
 /*!40000 ALTER TABLE `models` DISABLE KEYS */;
 INSERT INTO `models` VALUES (1,'Outdoorsy Metaphor',NULL);
+INSERT INTO `models` VALUES (2,'Foo Bar',NULL);
 /*!40000 ALTER TABLE `models` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -190,7 +191,7 @@ DROP TABLE IF EXISTS `trimlines`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `trimlines` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `model` int(11) DEFAULT NULL,
   `default_color` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
