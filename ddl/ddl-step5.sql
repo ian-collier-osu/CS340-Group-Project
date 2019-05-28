@@ -105,7 +105,7 @@ CREATE TABLE `part_requirements` (
   CONSTRAINT `part_requirements_ibfk_2` FOREIGN KEY (`associated_model`) REFERENCES `models` (`id`),
   CONSTRAINT `part_requirements_ibfk_3` FOREIGN KEY (`associated_part`) REFERENCES `parts` (`id`),
   CONSTRAINT `CONSTRAINT_1` CHECK (`associated_model` is not null or `associated_trimline` is not null)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -121,7 +121,7 @@ CREATE TABLE `parts` (
   `quantity_on_hand` int(11) NOT NULL,
   `cost` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -142,7 +142,7 @@ CREATE TABLE `trimlines` (
   KEY `default_color` (`default_color`),
   CONSTRAINT `trimlines_ibfk_3` FOREIGN KEY (`model`) REFERENCES `models` (`id`) ON DELETE CASCADE,
   CONSTRAINT `trimlines_ibfk_4` FOREIGN KEY (`default_color`) REFERENCES `colors` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -154,4 +154,4 @@ CREATE TABLE `trimlines` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-05-27 21:09:03
+-- Dump completed on 2019-05-27 21:28:14
