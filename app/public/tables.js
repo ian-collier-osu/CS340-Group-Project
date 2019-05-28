@@ -29,6 +29,7 @@ const CLASS_RELOAD_BUTTON = "table-btn-reload";
 const CLASS_MODIFIED_INDICATOR = "modified-indicator";
 const CLASS_DELETED_INDICATOR = "deleted-indicator";
 
+// TODO remove
 const RowStateEnum = {
     UNMODIFIED : 0,
     UPDATED : 1,
@@ -45,6 +46,18 @@ const FieldTypeEnum = {
     NUMBER: 4
 };
 
+const TableChangeTypeEnum = {
+    CREATE: 0,
+    UPDATE: 1,
+    DELETE: 2
+}
+
+function TableChange(type, contents, rowIndex) {
+  this.type = type;
+  this.contents = contents;
+  this.rowIndex = rowIndex;
+}
+
 var $TABLE = $('.editable-table');
 
 // Sample page data
@@ -56,9 +69,12 @@ var pageData = {
     rowStates: []
 };
 
+
 $(document).ready(function() {
     ajaxRefreshTable();
 });
+
+// -- AJAX functionality --
 
 function ajaxRefreshTable() {
     if(routesData == undefined) {
@@ -70,8 +86,8 @@ function ajaxRefreshTable() {
         type : 'GET',
         success : function(data) {
             console.log("Loaded table data: " + JSON.stringify(data));
-            initPageData(data);
-            populateTable();
+            populatePageData(data);
+            tablePopulate();
         },
         error : function(request,error)
         {
@@ -80,7 +96,7 @@ function ajaxRefreshTable() {
     });
 }
 
-function initPageData(getDict) {
+function populatePageData(getDict) {
     pageData = {
         tableHeader: [],
         tableContents: [],
@@ -112,7 +128,7 @@ function initPageData(getDict) {
         // Set field types (numbers and strings)
         i = 0;
         for(colItem of pageData.tableContents[0]) {
-            
+
             var fieldType = FieldTypeEnum.UNEDITABLE;
             if (typeof colItem === 'string' || colItem instanceof String) {
                 fieldType = FieldTypeEnum.TEXT;
@@ -141,7 +157,9 @@ function initPageData(getDict) {
 
 }
 
-function addEmptyRow() {
+// -- HTML table modifications --
+
+function tableAddEmptyRow() {
     var newRowContents = [];
 
     for(fieldType of pageData.tableFieldTypes) {
@@ -157,10 +175,10 @@ function addEmptyRow() {
         newRowContents.push(newRowItem);
     }
     pageData.tableContents.push(newRowContents);
-    addRow(newRowContents);
+    tableAddRow(newRowContents);
 }
 
-function addRow(rowData) {
+function tableAddRow(rowData) {
     var $newRow = $('<tr>');
     for(colData of rowData) {
         // Create new data item
@@ -195,7 +213,7 @@ function addRow(rowData) {
 }
 
 // Fills in the table from pageData
-function populateTable() {
+function tablePopulate() {
     // Clear table
     $TABLE.empty();
 
@@ -216,9 +234,11 @@ function populateTable() {
     $TABLE.append($tableBody);
 
     for (rowData of pageData.tableContents) {
-        addRow(rowData);
+        tableAddRow(rowData);
     }
 }
+
+// -- HTML listeners --
 
 // Listen for changes in text fields to update the table contents
 $(document).on('change', '.' + CLASS_EDITABLE_TABLE_ITEM, function() {
@@ -378,7 +398,7 @@ $(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
 });
 
 $('.' + CLASS_ADD_BUTTON).click(function () {
-    addEmptyRow();
+    tableAddEmptyRow();
 });
 
 $('.' + CLASS_SAVE_BUTTON).click(function () {
@@ -398,3 +418,27 @@ $('.' + CLASS_RELOAD_BUTTON).click(function () {
 // TODO Need something to listen for a change in editable field classes to update value in mem and mark color
 
 // TODO new function that takes cell of origin and intended marker -- marks row and sets visuals
+
+
+// TODO change stack
+
+var tableChangesArr = [];
+
+function pushChange(tableChange) {
+    tableChangesArr.push(tableChange);
+    applyTableChange(tableChange);
+}
+
+function popChange() {
+    var tableChange = tableChangesArr.pop();
+    applyTableChange(tableChange);
+}
+
+// Applies change to table contents
+function applyTableChange(tableChange) {
+
+}
+
+function flattenTableChanges() {
+
+}
