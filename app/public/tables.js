@@ -61,10 +61,15 @@ $(document).ready(function() {
 });
 
 function ajaxRefreshTable() {
+    if(routesData == undefined) {
+        alert("Error: Meta file unspecified.");
+    }
+
     $.ajax({
-        url : '/Models',
+        url : routesData.mainUrl,
         type : 'GET',
         success : function(data) {
+            console.log("Loaded table data: " + JSON.stringify(data));
             initPageData(data);
             populateTable();
         },
@@ -86,7 +91,7 @@ function initPageData(getDict) {
 
     // Populate table headers (temp)
     if(getDict.length > 0) {
-        for(colFieldName of Object.keys(getDict[0])) {
+        for(colFieldName of routesData.headerTitles) {
             pageData.tableHeader.push(colFieldName);
         }
     }
@@ -96,27 +101,44 @@ function initPageData(getDict) {
         pageData.rowStates.push(RowStateEnum.UNMODIFIED);
         pageData.tableContents.push([]);
         for(colItem of Object.values(rowObj)) {
+            if(colItem == null) colItem = "(null)";
             pageData.tableContents[i].push(colItem);
         }
         i++;
     }
 
-    // Set field types
+
     if(pageData.tableContents.length > 0) {
+        // Set field types (numbers and strings)
         i = 0;
         for(colItem of pageData.tableContents[0]) {
+            
             var fieldType = FieldTypeEnum.UNEDITABLE;
-            if(i == 0) {
-                fieldType = FieldTypeEnum.PRIMARY_KEY;
-            } else if (typeof colItem === 'string' || colItem instanceof String) {
+            if (typeof colItem === 'string' || colItem instanceof String) {
                 fieldType = FieldTypeEnum.TEXT;
             } else if (typeof colItem == 'number') {
                 fieldType = FieldTypeEnum.NUMBER;
             }
+
+            // Disable PK editing if specified
+            if(i == 0 && !routesData.pkIsEditable) {
+                fieldType = FieldTypeEnum.PRIMARY_KEY;
+            }
+
             pageData.tableFieldTypes.push(fieldType);
             i++;
         }
+
+        // Set field types (foreign keys)
+        i = 0;
+        for(fkUrl of routesData.foreignKeyUrls) {
+            if(fkUrl != undefined) {
+                pageData.tableFieldTypes[i] = FieldTypeEnum.FOREIGN_KEY;
+            }
+            i++;
+        }
     }
+
 }
 
 function addEmptyRow() {
@@ -247,6 +269,7 @@ function getEditableField(row, col) {
     var $newElem;
     var fieldType = pageData.tableFieldTypes[col];
     var fieldContent = pageData.tableContents[row][col];
+    console.log(col + ": " + fieldType)
 
     // Do a lookup for the intended type
     switch(fieldType) {
@@ -264,9 +287,9 @@ function getEditableField(row, col) {
                 value: fieldContent
             });
             break;
-        // TODO Dropdown menu
         case FieldTypeEnum.FOREIGN_KEY:
             $newElem = undefined;
+            break;
         default:
             $newElem = undefined;
             break;
