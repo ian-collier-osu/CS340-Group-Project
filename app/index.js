@@ -152,39 +152,37 @@ app.get('/Search', function(req, res){
 
 /* DB routes */
 
-// TODO move this to another file
+var Queries = {
+    models: require('./queries/models.js'),
+    trimlines: require('./queries/trimlines.js'),
+    parts: require('./queries/parts.js'),
+    partRequirements: require('./queries/partrequirements.js')
+}
+
+function queryCallback(res) {
+    return function(rows, err) {
+        if(err) {
+          console.log(err);
+          res.status(500).send("MySQL Error");
+        }
+        res.send(rows);
+    };
+}
 
 app.get('/Models',function(req,res,next){
-    con.query("SELECT id, name, base_trimline FROM models ORDER BY id", function(err, rows)
-    {
-      if(err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
+    Queries.models.readAll(con, queryCallback(res));
 });
 
 //Add new model; cannot handle base trimline due to foreign key requirement.
-app.put('/Models',function(req,res,next){
-  con.query("INSERT INTO models (name), VALUES (?)", [req.body.name], function(err, rows)
-  {
-    if (err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-    }
-    con.query("SELECT id, name FROM models", function(err, rows){
-      if (err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
-  });
+app.put('/Models', function(req,res,next){
+    Queries.models.createOne(con, queryCallback(res), [req.body.name]);
 });
+
+app.post('/Models/:id', function(req,res,next){
+    Queries.models.updateOne(con, queryCallback(res), [req.body.name, req.body.base_trimline, req.params.id]);
+});
+
+// TODO separate the rest of these sql functions
 
 app.get('/Trimlines',function(req,res,next){
   con.query("SELECT id, name, model, default_color FROM trimlines", function(err, rows){
@@ -204,6 +202,7 @@ app.put('/Trimlines',function(req,res,next){
     {
       console.log(err);
       res.status(500).send("MySQL Error");
+      return;
     }
     con.query("SELECT id, name, model, default_color FROM trimlines", function(err, rows){
       if (err)
@@ -213,6 +212,19 @@ app.put('/Trimlines',function(req,res,next){
       }
       res.send(rows);
     });
+  });
+});
+
+app.post('/Trimlines/:id',function(req,res,next){
+  con.query("UPDATE trimlines SET name = (?), model = (?), default_color = (?) WHERE id = (?)", [req.body.name, req.body.model, req.body.default_color, req.params.id], function(err, rows)
+  {
+    if (err)
+    {
+        console.log(err);
+        res.status(500).send("MySQL Error");
+        return;
+    }
+    res.send();
   });
 });
 
@@ -234,6 +246,8 @@ app.put('/Colors', function(req, res, next){
     if (err)
     {
       console.log(err);
+      res.status(500).send("MySQL Error");
+      return;
     }
     con.query("SELECT name FROM colors", function(err, rows){
       if(err)
@@ -243,6 +257,19 @@ app.put('/Colors', function(req, res, next){
       }
       res.send(rows);
     });
+  });
+});
+
+app.post('/Colors/:name',function(req,res,next){
+  con.query("UPDATE colors SET name = (?) WHERE name = (?)", [req.body.name, req.params.name], function(err, rows)
+  {
+    if (err)
+    {
+        console.log(err);
+        res.status(500).send("MySQL Error");
+        return;
+    }
+    res.send();
   });
 });
 
@@ -265,6 +292,7 @@ app.put('/Parts', function(req, res, next){
     {
       console.log(err);
       res.status(500).send("MySQL Error");
+      return;
     }
     con.query("SELECT id, name, quantity_on_hand, cost FROM parts", function(err, rows){
       if(err)
@@ -274,6 +302,19 @@ app.put('/Parts', function(req, res, next){
       }
       res.send(rows);
     });
+  });
+});
+
+app.post('/Parts/:id',function(req,res,next){
+  con.query("UPDATE parts SET name = (?), quantity_on_hand = (?), cost = (?) WHERE id = (?)", [req.body.name, req.body.quantity_on_hand, req.body.cost, req.params.id], function(err, rows)
+  {
+    if (err)
+    {
+        console.log(err);
+        res.status(500).send("MySQL Error");
+        return;
+    }
+    res.send();
   });
 });
 
@@ -302,6 +343,7 @@ app.put('/PartRequirements', function(req, res, next){
     {
       console.log(err);
       res.status(500).send("MySQL Error");
+      return;
     }
     con.query(`SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
       FROM part_requirements pr
@@ -314,6 +356,19 @@ app.put('/PartRequirements', function(req, res, next){
       }
       res.send(rows);
     });
+  });
+});
+
+app.post('/PartRequirements/:id',function(req,res,next){
+  con.query("UPDATE part_requirements SET associated_model = (?), associated_trimline = (?), associated_part = (?), quantity = (?) WHERE id = (?)", [req.body.associated_model, req.body.associated_trimline, req.body.associated_part, req.body.quantity, req.params.id], function(err, rows)
+  {
+    if (err)
+    {
+        console.log(err);
+        res.status(500).send("MySQL Error");
+        return;
+    }
+    res.send();
   });
 });
 
