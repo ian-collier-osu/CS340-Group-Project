@@ -80,7 +80,7 @@ SELECT t.name FROM trimlines t WHERE t.name = :model_in;
 
 --Show colors available for a given model.
 
-SELECT c.name FROM models m
+SELECT c.name AS color FROM models m
   INNER JOIN model_colors mc ON m.id = mc.models
   INNER JOIN colors c ON mc.color = c.id
   WHERE m.id = :model_in;
@@ -95,7 +95,7 @@ SELECT p.name, pr.quantity as quantity, p.cost, pr.quantity * p.cost AS total_co
 
 --Show total costs needed for a specific order.
 
-SELECT o.id, o.customer, m.name, t.name, c.name, SUM(p.cost * pr.quantity) AS part_cost
+SELECT o.id, o.customer, m.name AS model, t.name AS trimline, c.name AS color, SUM(p.cost * pr.quantity) AS part_cost
   FROM orders o
   INNER JOIN trimlines t ON o.trimline = t.id
   INNER JOIN models m ON t.model = m.id
@@ -127,7 +127,7 @@ SELECT o.id, o.customer, m.name, t.name, c.name, SUM(p.cost * pr.quantity) AS pa
 
 --Order
 
-SELECT o.id, o.customer, o.trimline, c.name FROM orders o
+SELECT o.id, o.customer, o.trimline, c.name AS color FROM orders o
   INNER JOIN colors c ON o.color = c.id
   WHERE customer LIKE "%:nameinput%";
 
@@ -137,9 +137,9 @@ SELECT id, name, base_trimline FROM models where name LIKE "%:nameinput%";
 
 --Trimline
 
-SELECT t.id, t.name, t.model, c.name FROM trimlines t 
-  ON t.default_color = c.id
-  where name LIKE "%:nameinput%";
+SELECT t.id, t.name, t.model, c.name AS `default color` FROM trimlines t
+  INNER JOIN colors c ON t.default_color = c.id
+  WHERE t.name LIKE "%:nameinput%";
 
 --Part
 
