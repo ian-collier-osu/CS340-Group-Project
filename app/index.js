@@ -229,7 +229,7 @@ app.post('/Trimlines/:id',function(req,res,next){
 });
 
 app.get('/Colors',function(req,res,next){
-  con.query("SELECT name FROM colors", function(err, rows)
+  con.query("SELECT id, name FROM colors", function(err, rows)
   {
     if(err)
     {
@@ -260,8 +260,8 @@ app.put('/Colors', function(req, res, next){
   });
 });
 
-app.post('/Colors/:name',function(req,res,next){
-  con.query("UPDATE colors SET name = (?) WHERE name = (?)", [req.body.name, req.params.name], function(err, rows)
+app.post('/Colors/:id',function(req,res,next){
+  con.query("UPDATE colors SET name = (?) WHERE id = (?)", [req.body.name, req.params.id], function(err, rows)
   {
     if (err)
     {
@@ -321,10 +321,7 @@ app.post('/Parts/:id',function(req,res,next){
 //I can add a route for searching parts by name, if desired.  --Mike
 
 app.get('/PartRequirements', function(req,res, next){
-    con.query(`SELECT pr.id, pr.quantity, pr.name, m.name AS model, t.name AS trimline
-      FROM part_requirements pr
-      INNER JOIN trimlines t ON pr.associated_trimline = t.id
-      INNER JOIN models m ON pr.associated_trimline = m.id`, function(err, rows){
+    con.query(`SELECT id, associated_model, associated_trimline, associated_part, quantity FROM part_requirements`, function(err, rows){
       if (err)
       {
         console.log(err);
@@ -370,6 +367,17 @@ app.post('/PartRequirements/:id',function(req,res,next){
     }
     res.send();
   });
+});
+
+app.get("/Orders", function(req, res) {
+    con.query("SELECT id, customer, trimline, color FROM orders", function(err, rows){
+      if (err)
+      {
+        console.log(err);
+        res.status(500).send("MySQL Error");
+      }
+      res.send(rows);
+    });
 });
 
 //Search an order based on name.
