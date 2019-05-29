@@ -1,8 +1,9 @@
 var routesData = {
-    pkIsEditable: false,
     mainUrl: "/Parts",
-    // Corresponds to column index in table
-    foreignKeyUrls: [undefined, undefined, undefined, undefined],
-    headerTitles: ["Id", "Name", "Quantity On Hand", "Cost"],
-    columnParamNames: ["id", "name", "quantity_on_hand", "cost"]
+    primaryKey: "id",
+    columnMetas: [
+        new ColumnMeta("Name", "Name", FieldTypeEnum.TEXT),
+        new ColumnMeta("Quantity On Hand", "quantity_on_hand", FieldTypeEnum.NUMBER),
+        new ColumnMeta("Cost", "cost", FieldTypeEnum.NUMBER)
+    ]
 };

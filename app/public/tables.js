@@ -2,6 +2,8 @@
 // jQuery for editable tables
 //
 
+// -- Const vars --
+
 // Edit row
 const TEXT_EDIT_BUTTON_EDITING = "Finish";
 const CLASS_EDIT_BUTTON_EDITING = "table-row-btn-stop-edit";
@@ -32,7 +34,7 @@ const CLASS_DELETED_INDICATOR = "deleted-indicator";
 const UNDEFINED_ITEM_VALUE = "?";
 const NULL_ITEM_VALUE = "(null)";
 
-// TODO remove
+// Latest state of a row
 const RowStateEnum = {
     UNMODIFIED : 0,
     UPDATED : 1,
@@ -40,124 +42,214 @@ const RowStateEnum = {
     // Note - all creates are handled under UPDATED
 }
 
-const FieldTypeEnum = {
-    PRIMARY_KEY: 0,
-    FOREIGN_KEY: 1,
-    UNEDITABLE: 2,
-    TEXT: 3,
-    NUMBER: 4
-};
-
 const TableChangeTypeEnum = {
     CREATE: 0,
     UPDATE: 1,
     DELETE: 2
 }
 
+// -- Object definitions --
+
+// Functions for page AJAX requests
+function PageRequests() {
+
+    var parent = this;
+
+    this.refreshPage = function() {
+        // Fetch main data
+        console.log("GET: " + pageData.mainRoute);
+        $.ajax({
+            url : routesData.mainUrl,
+            type : 'GET',
+            success : function(res) {
+                pageData.setTableRows(res);
+                // Redraw
+                tableDraw();
+            },
+            error : function(res, error)
+            {
+                parent._refreshError(res);
+            }
+        });
+
+        // Fetch foreign key data for each column
+        var i = 0; // Col index
+        for(tableColumn of pageData.tableColumns) {
+            console.log("Column: " + i + ", field type: " + tableColumn.columnMeta.fieldType);
+            if(tableColumn.columnMeta.fieldType == FieldTypeEnum.FOREIGN_KEY) {
+                console.log("GET: " + tableColumn.columnMeta.fkRoute);
+
+                // Fixes annoying closure issue
+                var reqFunc = function(columnIndex) {
+                    $.ajax({
+                        url : tableColumn.columnMeta.fkRoute,
+                        type : 'GET',
+                        success : function(res) {
+                            pageData.setTableFKData(columnIndex, res);
+                            // Redraw
+                            tableDraw();
+                        },
+                        error : function(res, error)
+                        {
+                            parent._refreshError(res);
+                        }
+                    });
+                }
+                reqFunc(i);
+            }
+
+            i++;
+        }
+    }
+
+    this._refreshError = function(res) {
+        alert("Server error: Failed to load page data.");
+        console.log(JSON.stringify(res));
+    }
+
+    this._commitError = function(res) {
+        alert("Server error: Failed to commit.");
+        console.log(JSON.stringify(res));
+    }
+}
+
 function TableChange(type, contents, rowIndex) {
   this.type = type;
-  this.contents = contents;
+  this.rowContents = contents; // Row contents at this point
   this.rowIndex = rowIndex;
 }
 
+function TableColumn(columnMeta, fkDict) {
+    if(fkDict === undefined) fkDict = {};
+    this.fkDict = fkDict; // K = PK, V = Text name
+    this.columnMeta = columnMeta; // Passed in from handlebars
+}
+
+function TableRow(primaryKey, displayedItems, rawItems, isNew) {
+    this.primaryKey = primaryKey; // Primary key value
+    this.displayedItems = displayedItems; // Array of items to draw in the table (aka FKs are replaced w/ display values)
+    this.rawItems = rawItems; // Array of real data from the DB
+    this.isNew = isNew; // Is a row created in this session
+    this.rowState = RowStateEnum.UNMODIFIED;
+}
+
+// Stores current page data
+function PageData() {
+    this.primaryKey = "";
+    this.mainRoute = "";
+    this.tableColumns = [];
+    this.tableChanges = [];
+    this.tableRows = [];
+
+    var parent = this;
+
+    // Initialize from passed in data
+    this.init = function(routesData) {
+        parent.mainRoute = routesData.mainUrl;
+        parent.primaryKey = routesData.primaryKey;
+        parent._setTableColumns(routesData.columnMetas);
+    }
+
+    // Add a new change
+    this.pushTableChange = function(tableChange) {
+        parent.tableChanges.push(tableChange);
+        parent._applyTableChange(tableChange);
+    }
+
+    // Undo a change
+    this.popTableChange = function() {
+        if(parent.tableChanges.length > 0) {
+            var tableChange = parent.tableChanges.pop();
+            parent._applyTableChange(tableChange);
+            return tableChange;
+        } else {
+            return null;
+        }
+    }
+
+    // Apply a change to the stored data
+    this._applyTableChange = function(tableChange) {
+        // Apply change to raw row data
+        // Fetch the correct FK value for each field if needed
+        // Set row state
+    }
+
+    // Set table rows based on response
+    this.setTableRows = function(responseData) {
+        parent.tableRows = [];
+
+        if(responseData.length > 0) {
+            // Add all rows from response to table
+            for(responseRow of responseData) {
+                var rawItems = [];
+                var primaryKeyVal;
+
+                // Map each row's values to an array
+                Object.keys(responseRow).forEach(function(key) {
+                    var responseItem = responseRow[key];
+
+                    // Leave out the PK
+                    if(key != parent.primaryKey) {
+                        if(responseItem == null) responseItem = NULL_ITEM_VALUE;
+                        rawItems.push(responseItem);
+                    } else {
+                        primaryKeyVal = responseItem;
+                    }
+                });
+
+                // Add a new row
+                parent.tableRows.push(new TableRow(primaryKeyVal, rawItems, rawItems, false))
+            }
+        }
+    }
+
+    // Set columns based on passed in data
+    this._setTableColumns = function(columnMetaArr) {
+        parent.tableColumns = [];
+        for(columnMeta of columnMetaArr) {
+            parent.tableColumns.push(new TableColumn(columnMeta));
+        }
+    }
+
+    // Set FK info for rows/cols based on response
+    this.setTableFKData = function(columnIndex, responseData) {
+        var tableColumn = parent.tableColumns[columnIndex];
+        // Map response rows to column fk dict
+        if(responseData.length > 0) {
+            for(responseRow of responseData) {
+                // Ex: fkDict[responseRow['id']] = responseRow['name']
+                tableColumn.fkDict[responseRow[tableColumn.columnMeta.fkKey]] = responseRow[tableColumn.columnMeta.fkValue];
+            }
+        }
+        // For each row set col to proper display val
+        for(tableRow of parent.tableRows) {
+            var displayedItem = tableColumn.fkDict[tableRow.rawItems[columnIndex]];
+            if(displayedItem !== undefined) {
+                tableRow.displayedItems[columnIndex] = displayedItem;
+            } else {
+                // TODO change this
+                tableRow.displayedItems[columnIndex] = "?";
+            }
+        }
+    }
+}
+
+// -- Global vars --
+
 var $TABLE = $('.editable-table');
+var pageData = new PageData();
+var pageRequests = new PageRequests();
 
-// Sample page data
-// TODO generate
-var pageData = {
-    tableHeader: [],
-    tableContents: [],
-    tableFieldTypes: [],
-    rowStates: []
-};
-
+// -- Init --
 
 $(document).ready(function() {
-    ajaxRefreshTable();
-});
-
-// -- AJAX functionality --
-
-function ajaxRefreshTable() {
     if(routesData == undefined) {
         alert("Error: Meta file unspecified.");
     }
 
-    $.ajax({
-        url : routesData.mainUrl,
-        type : 'GET',
-        success : function(data) {
-            console.log("Loaded table data: " + JSON.stringify(data));
-            populatePageData(data);
-            tablePopulate();
-        },
-        error : function(request,error)
-        {
-            alert("Failed to load data: "+JSON.stringify(request));
-        }
-    });
-}
-
-function populatePageData(getDict) {
-    pageData = {
-        tableHeader: [],
-        tableContents: [],
-        tableFieldTypes: [],
-        rowStates: []
-    };
-    var i = 0;
-
-    // Populate table headers (temp)
-    if(getDict.length > 0) {
-        for(colFieldName of routesData.headerTitles) {
-            pageData.tableHeader.push(colFieldName);
-        }
-    }
-
-    // Populate table data
-    for(rowObj of getDict) {
-        pageData.rowStates.push(RowStateEnum.UNMODIFIED);
-        pageData.tableContents.push([]);
-        for(colItem of Object.values(rowObj)) {
-            if(colItem == null) colItem = NULL_ITEM_VALUE;
-            pageData.tableContents[i].push(colItem);
-        }
-        i++;
-    }
-
-
-    if(pageData.tableContents.length > 0) {
-        // Set field types (numbers and strings)
-        i = 0;
-        for(colItem of pageData.tableContents[0]) {
-
-            var fieldType = FieldTypeEnum.UNEDITABLE;
-            if (typeof colItem === 'string' || colItem instanceof String) {
-                fieldType = FieldTypeEnum.TEXT;
-            } else if (typeof colItem == 'number') {
-                fieldType = FieldTypeEnum.NUMBER;
-            }
-
-            // Disable PK editing if specified
-            if(i == 0 && !routesData.pkIsEditable) {
-                fieldType = FieldTypeEnum.PRIMARY_KEY;
-            }
-
-            pageData.tableFieldTypes.push(fieldType);
-            i++;
-        }
-
-        // Set field types (foreign keys)
-        i = 0;
-        for(fkUrl of routesData.foreignKeyUrls) {
-            if(fkUrl != undefined) {
-                pageData.tableFieldTypes[i] = FieldTypeEnum.FOREIGN_KEY;
-            }
-            i++;
-        }
-    }
-
-}
+    pageData.init(routesData);
+    pageRequests.refreshPage();
+});
 
 // -- HTML table modifications --
 
@@ -216,7 +308,7 @@ function tableAddRow(rowData) {
 }
 
 // Fills in the table from pageData
-function tablePopulate() {
+function tableDraw() {
     // Clear table
     $TABLE.empty();
 
@@ -225,9 +317,9 @@ function tablePopulate() {
     $TABLE.append($tableHead);
 
     var $newHeader = $('<tr>');
-    for (headerItem of pageData.tableHeader) {
+    for (tableColumn of pageData.tableColumns) {
         var $newHeaderItem = $('<td>')
-            .text(headerItem);
+            .text(tableColumn.columnMeta.displayName);
         $newHeader.append($newHeaderItem);
     }
     $tableHead.append($newHeader);
@@ -236,8 +328,8 @@ function tablePopulate() {
     var $tableBody = $('<tbody>');
     $TABLE.append($tableBody);
 
-    for (rowData of pageData.tableContents) {
-        tableAddRow(rowData);
+    for (tableRow of pageData.tableRows) {
+        tableAddRow(tableRow.displayedItems);
     }
 }
 
@@ -273,7 +365,7 @@ function rowDisableEditing() {
             // Set innerhtml to respective text
             col = $(this).index();
             // Make sure we ignore buttons
-            if(col < pageData.tableHeader.length) {
+            if(col < pageData.tableColumns.length) {
                 $(this).text(pageData.tableContents[row][col]);
             }
             // TODO set color class based on status

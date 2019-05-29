@@ -1,8 +1,8 @@
 var routesData = {
-    pkIsEditable: false,
     mainUrl: "/Models",
-    // Corresponds to column index in table
-    foreignKeyUrls: [undefined, undefined, "/Trimlines"],
-    headerTitles: ["Id", "Name", "Base Trimline"],
-    columnParamNames: ["id", "name", "base_trimline"]
+    primaryKey: "id",
+    columnMetas: [
+        new ColumnMeta("Name", "name", FieldTypeEnum.TEXT),
+        new ColumnMeta("Base Trimline", "base_trimline", FieldTypeEnum.FOREIGN_KEY, "/Trimlines", "id", "name")
+    ]
 };

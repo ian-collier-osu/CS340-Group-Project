@@ -32,7 +32,6 @@ module.exports = function filter(options) {
 			return next();
 		}
 		var found = null;
-		console.log("filter.");
 
 		/* Examining the req.body object If there is a req.body object it must be checked */
 		if (req.body && Object.keys(req.body).length) {
@@ -41,7 +40,6 @@ module.exports = function filter(options) {
 			// var hrstart = process.hrtime()
 			jsonToString(req.body, typeList, checkNames, function(str){
 				if(wordFilter.isProfane(str)) found = str;
-				console.log("param:" + str);
 
 				if (found) {
 					if (dispatchToErrorHandler) {
