@@ -175,7 +175,7 @@ app.get('/Models',function(req,res,next){
 
 //Add new model; cannot handle base trimline due to foreign key requirement.
 app.put('/Models', function(req,res,next){
-    Queries.models.createOne(con, queryCallback(res), [req.body.name]);
+    Queries.models.createEmpty(con, queryCallback(res));
 });
 
 app.post('/Models/:id', function(req,res,next){

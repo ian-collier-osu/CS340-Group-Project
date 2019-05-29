@@ -1,4 +1,4 @@
-exports.readAll = function(con, cb) {
+exports.readAll = function(con, cb, params) {
     con.query("SELECT id, name, base_trimline FROM models ORDER BY id", function(err, rows) {
       cb(rows, err);
     });
@@ -12,6 +12,12 @@ exports.readOne = function(con, cb, params) {
 
 exports.createOne = function(con, cb, params) {
     con.query("INSERT INTO models (name), VALUES (?)", params, function(err, rows) {
+      cb(rows, err);
+    });
+}
+
+exports.createEmpty = function(con, cb, params) {
+    con.query("INSERT INTO models (name) VALUES ('');", function(err, rows) {
       cb(rows, err);
     });
 }

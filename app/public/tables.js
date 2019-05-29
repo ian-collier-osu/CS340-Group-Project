@@ -29,13 +29,15 @@ const CLASS_RELOAD_BUTTON = "table-btn-reload";
 const CLASS_MODIFIED_INDICATOR = "modified-indicator";
 const CLASS_DELETED_INDICATOR = "deleted-indicator";
 
+const UNDEFINED_ITEM_VALUE = "?";
+const NULL_ITEM_VALUE = "(null)";
+
 // TODO remove
 const RowStateEnum = {
     UNMODIFIED : 0,
     UPDATED : 1,
-    DELETED : 2,
-    CREATED : 3,
-    HEADER: 4
+    DELETED : 2
+    // Note - all creates are handled under UPDATED
 }
 
 const FieldTypeEnum = {
@@ -117,7 +119,7 @@ function populatePageData(getDict) {
         pageData.rowStates.push(RowStateEnum.UNMODIFIED);
         pageData.tableContents.push([]);
         for(colItem of Object.values(rowObj)) {
-            if(colItem == null) colItem = "(null)";
+            if(colItem == null) colItem = NULL_ITEM_VALUE;
             pageData.tableContents[i].push(colItem);
         }
         i++;
@@ -163,7 +165,7 @@ function tableAddEmptyRow() {
     var newRowContents = [];
 
     for(fieldType of pageData.tableFieldTypes) {
-        var newRowItem = "?";
+        var newRowItem = UNDEFINED_ITEM_VALUE;
         switch(fieldType) {
             case FieldTypeEnum.TEXT:
                 newRowItem = "";
@@ -175,6 +177,7 @@ function tableAddEmptyRow() {
         newRowContents.push(newRowItem);
     }
     pageData.tableContents.push(newRowContents);
+    pageData.rowStates.push(RowStateEnum.UPDATED);
     tableAddRow(newRowContents);
 }
 
@@ -259,7 +262,7 @@ $(document).on('change', '.' + CLASS_EDITABLE_TABLE_ITEM, function() {
     pageData.tableContents[row][col] = $(this).val();
 });
 
-// Edit button on on a row, while editing
+
 function rowDisableEditing() {
     // Find parent TR
     var row, col;
@@ -282,7 +285,13 @@ function rowDisableEditing() {
     $(this).removeClass(CLASS_EDIT_BUTTON_EDITING).addClass(CLASS_EDIT_BUTTON_NOT_EDITING);
 }
 
-$(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, rowDisableEditing);
+// Edit button on on a row, while editing
+$(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, function() {
+    $(this).each(rowDisableEditing);
+    var $thisRow = $(this).closest('tr');
+    var rowIndex = $thisRow.index();
+    pageData.rowStates[rowIndex] = RowStateEnum.UPDATED;
+});
 
 // TODO based on row, col
 function getEditableField(row, col) {
@@ -402,7 +411,8 @@ $('.' + CLASS_ADD_BUTTON).click(function () {
 });
 
 $('.' + CLASS_SAVE_BUTTON).click(function () {
-    alert("Save button");
+    alert("Please wait for page to refresh [will use loading bar in future]");
+    commitTableChanges();
     // Make an AJAX request to commit rows to the DB
 });
 
@@ -414,6 +424,134 @@ $('.' + CLASS_RELOAD_BUTTON).click(function () {
 
     // Make an AJAX request to commit rows to the DB
 });
+
+var commitRequestCounter;
+
+function commitTableChanges() {
+    // TODO show loading thing
+
+    // Count the requests needed to fulfill a commit
+    commitRequestCounter = 0;
+    for(rowState of pageData.rowStates) {
+        if(rowState != RowStateEnum.UNMODIFIED) {
+            commitRequestCounter++;
+        }
+    }
+
+    if(commitRequestCounter == 0) {
+        alert("No changes to commit");
+        return;
+    }
+
+    // Execute the requests
+    for(var i = 0; i < pageData.rowStates.length; i++) {
+        var rowState = pageData.rowStates[i];
+        var rowContent = pageData.tableContents[i];
+
+        switch (rowState) {
+            case RowStateEnum.DELETED:
+                commitDelete(rowContent);
+                break;
+            case RowStateEnum.UPDATED:
+                commitUpdate(rowContent);
+                break;
+        }
+    }
+}
+
+function commitDelete(rowContent) {
+    if(rowContent[0] != UNDEFINED_ITEM_VALUE) {
+        // Only delete if not a new row
+        console.log("Delete commit.");
+        $.ajax({
+            url : routesData.mainUrl + "/" + rowContent[0],
+            type : 'DELETE',
+            success : function(data) {
+                commitFinish();
+            },
+            error : function(request,error)
+            {
+                commitError(request);
+            }
+        });
+    }
+}
+
+function commitUpdate(rowContent) {
+    // Build request data
+    var ajaxUpdateData = {};
+    for (var i = 1; i < routesData.columnParamNames.length; i++) {
+        var paramName = routesData.columnParamNames[i];
+        var paramVal = rowContent[i];
+        if(paramVal != NULL_ITEM_VALUE) {
+            ajaxUpdateData[paramName] = paramVal;
+        }
+    }
+
+    if(rowContent[0] != UNDEFINED_ITEM_VALUE) {
+        // If not a new row just update
+        console.log("Update commit.");
+        $.ajax({
+            url : routesData.mainUrl + "/" + rowContent[0],
+            type : 'POST',
+            data : ajaxUpdateData,
+            dataType: 'json',
+            success : function(data) {
+                commitFinish();
+            },
+            error : function(request,error)
+            {
+                commitError(request);
+            }
+        });
+
+    } else {
+        console.log("Create commit.");
+        // TODO need to get id back
+        // If a new row create first, then update
+        // Create
+        $.ajax({
+            url : routesData.mainUrl,
+            type : 'PUT',
+            success : function(data) {
+                // Update
+                alert("PUT result: "+JSON.stringify(data));
+                $.ajax({
+                    url : routesData.mainUrl + "/" + rowContent[0],
+                    type : 'POST',
+                    data : ajaxUpdateData,
+                    dataType: 'json',
+                    success : function(data) {
+                        commitFinish();
+                    },
+                    error : function(request,error)
+                    {
+                        commitError(request);
+                    }
+                });
+            },
+            error : function(request,error)
+            {
+                commitError(request);
+            }
+        });
+    }
+}
+
+
+// Checks if all commits requests have been executed
+function commitFinish() {
+    commitRequestCounter--;
+    if(commitRequestCounter <= 0) {
+        ajaxRefreshTable();
+    }
+}
+
+function commitError(req) {
+    alert("Failed to commit: "+JSON.stringify(req));
+    ajaxRefreshTable();
+}
+
 
 // TODO Need something to listen for a change in editable field classes to update value in mem and mark color
 
