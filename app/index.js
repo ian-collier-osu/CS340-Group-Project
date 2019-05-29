@@ -15,6 +15,10 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Content filter
+var bodyContentFilter = require('./middleware/body-content-filter');
+app.use(bodyContentFilter());
+
 
 /* MySQL config */
 
