@@ -8,13 +8,24 @@
 <br>
 <br>
 <i>
-    <p>[Changes are not saved until you commit them]</p>
+    <p>Note: Finish must be pressed to save edits</p>
     <p>Planned Draft 6 Features:</p>
     <ul>
-        <li>Delete commits working</li>
         <li>Delete button will change to undelete</li>
-        <li>Foreign keys as dropdown menus</li>
-        <li>Fix the bug when adding then editing rows</li>
+        <li>Foreign key names shown instead of ids</li>
+        <li>Edit button replaced w/ fields that become editable when clicked:</li>
+        <ul>
+            <li>String &gt;&gt;&gt; Text field</li>
+            <li>Number &gt;&gt;&gt; Number field</li>
+            <li>Foreign Key &gt;&gt;&gt; Drop down menu</li>
+        </ul>
+        <li>Hidden primary keys</li>
+        <li>Loading bar for commiting</li>
+    </ul>
+    <p>Bugs:</p>
+    <ul>
+        <li>Adding then editing a row will discard edits</li>
+        <li>Delete is broken on foreign key tables</li>
     </ul>
 </i>
 <script src="/public/tablemeta/{{tableMetaFile}}"></script>

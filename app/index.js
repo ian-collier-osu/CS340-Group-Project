@@ -1,27 +1,27 @@
 var express = require('express');
 
-/* Config */
+/* Express config */
 
 var app = express();
 app.set('port', 8000);
 
+// Handlebars
 var handlebars = require('express-handlebars').create({defaultLayout:'main'});
-
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 
+// Body parser
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// File serving
-app.use('/public', express.static('public'))
 
-/* DB init */
+/* MySQL config */
+
 var mysql = require('mysql');
-
 var con;
 
+// Prevents database connection from timing out
 function handleDisconnect() {
     con = mysql.createConnection({
       host: "localhost",
@@ -52,21 +52,23 @@ function handleDisconnect() {
   });
 }
 
+// Initialize the connection
 handleDisconnect();
 
+/* Static routes */
 
-/* Routes */
-
-// Static file serving
 app.use('/public', express.static('public'));
 
-// Don't delete this, for testing
+
+/* Testing routes - dont delete */
+
+// Verify server up
 app.get('/Test',function(req,res){
     console.log("Test request receieved.");
     res.sendStatus(200);
 });
 
-// Don't delete this, for testing
+// Verify database connection
 app.get('/TestDB',function(req,res){
     var query = con.query("DROP TABLE IF EXISTS diagnostic;", function (err, result) {
         if (err) throw err;
@@ -89,6 +91,8 @@ app.get('/TestDB',function(req,res){
     });
     res.sendStatus(200);
 });
+
+/* HTML routes */
 
 app.get('/',function(req,res){
     var context = {};
@@ -152,12 +156,19 @@ app.get('/Search', function(req, res){
 
 /* DB routes */
 
+// Load query def files
+
 var Queries = {
     models: require('./queries/models.js'),
     trimlines: require('./queries/trimlines.js'),
     parts: require('./queries/parts.js'),
-    partRequirements: require('./queries/partrequirements.js')
+    partRequirements: require('./queries/partrequirements.js'),
+    colors: require('./queries/colors.js'),
+    orders: require('./queries/orders.js'),
+    misc: require('./queries/misc.js')
 }
+
+// Standard callback for DB queries
 
 function queryCallback(res) {
     return function(rows, err) {
@@ -169,11 +180,12 @@ function queryCallback(res) {
     };
 }
 
+// Models
+
 app.get('/Models',function(req,res,next){
     Queries.models.readAll(con, queryCallback(res));
 });
 
-//Add new model; cannot handle base trimline due to foreign key requirement.
 app.put('/Models', function(req,res,next){
     Queries.models.createEmpty(con, queryCallback(res));
 });
@@ -182,223 +194,107 @@ app.post('/Models/:id', function(req,res,next){
     Queries.models.updateOne(con, queryCallback(res), [req.body.name, req.body.base_trimline, req.params.id]);
 });
 
-// TODO separate the rest of these sql functions
+app.delete('/Models/:id', function(req,res,next){
+    Queries.models.deleteOne(con, queryCallback(res), [req.params.id]);
+});
+
+// Trimlines
 
 app.get('/Trimlines',function(req,res,next){
-  con.query("SELECT id, name, model, default_color FROM trimlines", function(err, rows){
-    if (err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-    }
-    res.send(rows);
-  });
+    Queries.trimlines.readAll(con, queryCallback(res));
 });
 
-//Create new trimline.
-app.put('/Trimlines',function(req,res,next){
-  con.query("INSERT INTO trimlines (name, model, default_color) VALUES (?, ?, ?)", [req.body.name, req.body.model, req.body.default_color], function(err, rows){
-    if (err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-      return;
-    }
-    con.query("SELECT id, name, model, default_color FROM trimlines", function(err, rows){
-      if (err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
-  });
+app.put('/Trimlines', function(req,res,next){
+    Queries.trimlines.createEmpty(con, queryCallback(res));
 });
 
-app.post('/Trimlines/:id',function(req,res,next){
-  con.query("UPDATE trimlines SET name = (?), model = (?), default_color = (?) WHERE id = (?)", [req.body.name, req.body.model, req.body.default_color, req.params.id], function(err, rows)
-  {
-    if (err)
-    {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-        return;
-    }
-    res.send();
-  });
+app.post('/Trimlines/:id', function(req,res,next){
+    Queries.trimlines.updateOne(con, queryCallback(res), [req.body.name, req.body.model, req.body.default_color, req.params.id]);
 });
+
+app.delete('/Trimlines/:id', function(req,res,next){
+    Queries.trimlines.deleteOne(con, queryCallback(res), [req.params.id]);
+});
+
+// Colors
 
 app.get('/Colors',function(req,res,next){
-  con.query("SELECT id, name FROM colors", function(err, rows)
-  {
-    if(err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-    }
-    res.send(rows);
-  });
+    Queries.colors.readAll(con, queryCallback(res));
 });
 
-//Create new color.
-app.put('/Colors', function(req, res, next){
-  con.query("INSERT INTO colors (name) VALUES (?)", [req.body.name], function(err, rows){
-    if (err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-      return;
-    }
-    con.query("SELECT name FROM colors", function(err, rows){
-      if(err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
-  });
+app.put('/Colors', function(req,res,next){
+    Queries.colors.createEmpty(con, queryCallback(res));
 });
 
-app.post('/Colors/:id',function(req,res,next){
-  con.query("UPDATE colors SET name = (?) WHERE id = (?)", [req.body.name, req.params.id], function(err, rows)
-  {
-    if (err)
-    {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-        return;
-    }
-    res.send();
-  });
+app.post('/Colors/:id', function(req,res,next){
+    Queries.colors.updateOne(con, queryCallback(res), [req.body.name, req.params.id]);
 });
 
+app.delete('/Colors/:id', function(req,res,next){
+    Queries.colors.deleteOne(con, queryCallback(res), [req.params.id]);
+});
+
+// Parts
 
 app.get('/Parts',function(req,res,next){
-  con.query("SELECT id, name, quantity_on_hand, cost FROM parts", function(err, rows){
-    if(err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-    }
-    res.send(rows);
-  });
+    Queries.parts.readAll(con, queryCallback(res));
 });
 
-//Create new part.
-app.put('/Parts', function(req, res, next){
-  con.query("INSERT INTO parts (name, quantity_on_hand, cost) VALUES (?, ?, ?)", [req.body.name, req.body.quantity_on_hand, req.body.cost || null], function(err, rows){
-    if(err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-      return;
-    }
-    con.query("SELECT id, name, quantity_on_hand, cost FROM parts", function(err, rows){
-      if(err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
-  });
+app.put('/Parts', function(req,res,next){
+    Queries.parts.createEmpty(con, queryCallback(res));
 });
 
-app.post('/Parts/:id',function(req,res,next){
-  con.query("UPDATE parts SET name = (?), quantity_on_hand = (?), cost = (?) WHERE id = (?)", [req.body.name, req.body.quantity_on_hand, req.body.cost, req.params.id], function(err, rows)
-  {
-    if (err)
-    {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-        return;
-    }
-    res.send();
-  });
+app.post('/Parts/:id', function(req,res,next){
+    Queries.parts.updateOne(con, queryCallback(res), [req.body.name, req.body.quantity_on_hand, req.body.cost, req.params.id]);
 });
 
-//I can add a route for searching parts by name, if desired.  --Mike
-
-app.get('/PartRequirements', function(req,res, next){
-    con.query(`SELECT id, associated_model, associated_trimline, associated_part, quantity FROM part_requirements`, function(err, rows){
-      if (err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
+app.delete('/Parts/:id', function(req,res,next){
+    Queries.parts.deleteOne(con, queryCallback(res), [req.params.id]);
 });
 
-/*Create a new part_requirement relationship.  The DB will enforce that one of associated_model and associated_trimline must be null, and the other must not be null.
-  It might be good to enforce that in the HTML/JS on the front-end, as well. --Mike */
-app.put('/PartRequirements', function(req, res, next){
-  con.query(`INSERT INTO part_requirements (quantity, associated_model, associated_trimline)
-  VALUES (?, ?, ?)`, [req.body.quantity, req.body.associated_model || null, req.body,associated_trimline || null], function(err, rows){
-    if (err)
-    {
-      console.log(err);
-      res.status(500).send("MySQL Error");
-      return;
-    }
-    con.query(`SELECT pr.id, pr.quantity, p.name, m.name AS model, t.name AS trimline,
-      FROM part_requirements pr
-      INNER JOIN trimlines t ON pr.associated_trimline = t.// id
-      INNER JOIN models m ON pr.associated_trimline = m.id`, function(err, rows){
-      if (err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
-  });
+// Part Requirements
+
+app.get('/PartRequirements',function(req,res,next){
+    Queries.partRequirements.readAll(con, queryCallback(res));
 });
 
-app.post('/PartRequirements/:id',function(req,res,next){
-  con.query("UPDATE part_requirements SET associated_model = (?), associated_trimline = (?), associated_part = (?), quantity = (?) WHERE id = (?)", [req.body.associated_model, req.body.associated_trimline, req.body.associated_part, req.body.quantity, req.params.id], function(err, rows)
-  {
-    if (err)
-    {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-        return;
-    }
-    res.send();
-  });
+app.put('/PartRequirements', function(req,res,next){
+    Queries.partRequirements.createEmpty(con, queryCallback(res));
 });
 
-app.get("/Orders", function(req, res) {
-    con.query("SELECT id, customer, trimline, color FROM orders", function(err, rows){
-      if (err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
+app.post('/PartRequirements/:id', function(req,res,next){
+    Queries.partRequirements.updateOne(con, queryCallback(res), [req.body.associated_model, req.body.associated_trimline, req.body.associated_part, req.body.quantity, req.params.id]);
 });
 
-//Search an order based on name.
-app.get('/Search', function(req, res, next){
-  con.query(`SELECT o.id, o.customer, m.name, t.name, o.color, SUM(p.cost * pr.quantity) AS part_cost
-    FROM orders o
-    INNER JOIN trimlines t ON o.trimline = t.id
-    INNER JOIN models m ON t.model = m.id
-    INNER JOIN part_requirements pr ON pr.associated_trimline = t.id OR pr.associated_model = m.id
-    INNER JOIN parts p ON p.id = pr.associated_part
-    WHERE o.name LIKE '%?%'`, [req.body.name], function(err, rows){
-      if (err)
-      {
-        console.log(err);
-        res.status(500).send("MySQL Error");
-      }
-      res.send(rows);
-    });
+app.delete('/PartRequirements/:id', function(req,res,next){
+    Queries.partRequirements.deleteOne(con, queryCallback(res), [req.params.id]);
 });
 
-/* Error stuff */
+// Orders
+
+app.get('/Orders',function(req,res,next){
+    Queries.orders.readAll(con, queryCallback(res));
+});
+
+app.put('/Orders', function(req,res,next){
+    Queries.orders.createEmpty(con, queryCallback(res));
+});
+
+app.post('/Orders/:id', function(req,res,next){
+    Queries.orders.updateOne(con, queryCallback(res), [req.body.customer, req.body.trimline, req.body.color, req.params.id]);
+});
+
+app.delete('/Orders/:id', function(req,res,next){
+    Queries.orders.deleteOne(con, queryCallback(res), [req.params.id]);
+});
+
+// Search
+
+app.get('/Search/:customerName', function(req, res, next){
+    Queries.misc.searchCustomer(con, queryCallback(res), [req.params.customerName]);
+});
+
+/* Error routes */
 
 app.use(function(req,res){
   res.status(404);

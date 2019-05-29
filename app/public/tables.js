@@ -313,6 +313,7 @@ function getEditableField(row, col) {
         case FieldTypeEnum.NUMBER:
             $newElem = $('<input>').attr({
                 type: 'number',
+                min: '0',
                 value: fieldContent
             });
             break;
@@ -411,7 +412,6 @@ $('.' + CLASS_ADD_BUTTON).click(function () {
 });
 
 $('.' + CLASS_SAVE_BUTTON).click(function () {
-    alert("Please wait for page to refresh [will use loading bar in future]");
     commitTableChanges();
     // Make an AJAX request to commit rows to the DB
 });
@@ -439,9 +439,11 @@ function commitTableChanges() {
     }
 
     if(commitRequestCounter == 0) {
-        alert("No changes to commit");
+        alert("No changes to commit.");
         return;
     }
+
+    alert("Please wait for table to refresh.");
 
     // Execute the requests
     for(var i = 0; i < pageData.rowStates.length; i++) {
@@ -474,6 +476,8 @@ function commitDelete(rowContent) {
                 commitError(request);
             }
         });
+    } else {
+        commitFinish();
     }
 }
 
@@ -515,20 +519,21 @@ function commitUpdate(rowContent) {
             type : 'PUT',
             success : function(data) {
                 // Update
-                alert("PUT result: "+JSON.stringify(data));
-                $.ajax({
-                    url : routesData.mainUrl + "/" + rowContent[0],
-                    type : 'POST',
-                    data : ajaxUpdateData,
-                    dataType: 'json',
-                    success : function(data) {
-                        commitFinish();
-                    },
-                    error : function(request,error)
-                    {
-                        commitError(request);
-                    }
-                });
+                commitFinish();
+                // alert("PUT result: "+JSON.stringify(data));
+                // $.ajax({
+                //     url : routesData.mainUrl + "/" + rowContent[0],
+                //     type : 'POST',
+                //     data : ajaxUpdateData,
+                //     dataType: 'json',
+                //     success : function(data) {
+                //         commitFinish();
+                //     },
+                //     error : function(request,error)
+                //     {
+                //         commitError(request);
+                //     }
+                // });
             },
             error : function(request,error)
             {
