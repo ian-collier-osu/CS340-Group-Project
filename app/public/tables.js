@@ -20,7 +20,8 @@ const TEXT_DELETE_BUTTON_DELETED = "Deleted";
 const CLASS_DELETE_BUTTON_DELETED = "table-row-btn-undelete";
 
 // Editable field marker
-const CLASS_EDITABLE_TABLE_ITEM = "table-item-editable";
+const CLASS_EDITABLE_TABLE_CELL = "table-item-editable";
+const CLASS_EDITING_TABLE_CELL = "table-item-editing";
 
 // Table buttons
 const CLASS_SAVE_BUTTON = "table-btn-save";
@@ -42,12 +43,6 @@ const RowStateEnum = {
     // Note - all creates are handled under UPDATED
 }
 
-const TableChangeTypeEnum = {
-    CREATE: 0,
-    UPDATE: 1,
-    DELETE: 2
-}
-
 // -- Object definitions --
 
 // Functions for page AJAX requests
@@ -63,8 +58,6 @@ function PageRequests() {
             type : 'GET',
             success : function(res) {
                 pageData.setTableRows(res);
-                // Redraw
-                tableDraw();
             },
             error : function(res, error)
             {
@@ -75,7 +68,6 @@ function PageRequests() {
         // Fetch foreign key data for each column
         var i = 0; // Col index
         for(tableColumn of pageData.tableColumns) {
-            console.log("Column: " + i + ", field type: " + tableColumn.columnMeta.fieldType);
             if(tableColumn.columnMeta.fieldType == FieldTypeEnum.FOREIGN_KEY) {
                 console.log("GET: " + tableColumn.columnMeta.fkRoute);
 
@@ -87,7 +79,7 @@ function PageRequests() {
                         success : function(res) {
                             pageData.setTableFKData(columnIndex, res);
                             // Redraw
-                            tableDraw();
+                            editableTable.populate();
                         },
                         error : function(res, error)
                         {
@@ -113,8 +105,7 @@ function PageRequests() {
     }
 }
 
-function TableChange(type, contents, rowIndex) {
-  this.type = type;
+function TableChange(contents, rowIndex) {
   this.rowContents = contents; // Row contents at this point
   this.rowIndex = rowIndex;
 }
@@ -221,6 +212,7 @@ function PageData() {
                 tableColumn.fkDict[responseRow[tableColumn.columnMeta.fkKey]] = responseRow[tableColumn.columnMeta.fkValue];
             }
         }
+        console.log("Column " + columnIndex + " foreign keys: " + JSON.stringify(tableColumn.fkDict));
         // For each row set col to proper display val
         for(tableRow of parent.tableRows) {
             var displayedItem = tableColumn.fkDict[tableRow.rawItems[columnIndex]];
@@ -228,17 +220,257 @@ function PageData() {
                 tableRow.displayedItems[columnIndex] = displayedItem;
             } else {
                 // TODO change this
-                tableRow.displayedItems[columnIndex] = "?";
+                tableRow.displayedItems[columnIndex] = UNDEFINED_ITEM_VALUE;
             }
+        }
+    }
+
+    // Creates and returns empty row, returns index of
+    this.addEmptyRow = function() {
+        var newRowItems = [];
+        for(tableColumn of parent.tableColumns) {
+            var fieldType = tableColumn.columnMeta.fieldType;
+            var newRowItem = UNDEFINED_ITEM_VALUE;
+
+            switch(fieldType) {
+                case FieldTypeEnum.TEXT:
+                    newRowItem = "";
+                    break;
+                case FieldTypeEnum.NUMBER:
+                    newRowItem = 0;
+                    break;
+            }
+            newRowItems.push(newRowItem);
+        }
+
+        var newRow = new TableRow(null, newRowItems, newRowItems, true);
+        newRow.rowState = RowStateEnum.UPDATED;
+        parent.tableRows.push(newRow);
+        return parent.tableRows.length - 1;
+    }
+}
+
+// -- HTML element builders --
+
+function ElementBuilder() {
+    var parent = this;
+
+    // Creates a static HTML elem for a cell
+    this.buildStaticCellElement = function(row, col) {
+        var $newElem;
+        var fieldContent = pageData.tableRows[row].displayedItems[col];
+        $newElem = $('<p>').text(fieldContent);
+        return $newElem;
+    }
+
+    // Creates an editable HTML elem for a cell
+    this.buildEditableCellElement = function(row, col) {
+        var $newElem;
+        var fieldType = pageData.tableColumns[col].columnMeta.fieldType;
+        var fieldContent = pageData.tableRows[row].displayedItems[col];
+
+        // Do a lookup for the intended type
+        switch(fieldType) {
+            // Text field
+            case FieldTypeEnum.TEXT:
+                $newElem = $('<input>').attr({
+                    type: 'text',
+                    value: fieldContent
+                });
+                break;
+            // Number field
+            case FieldTypeEnum.NUMBER:
+                $newElem = $('<input>').attr({
+                    type: 'number',
+                    min: '0',
+                    value: fieldContent
+                });
+                break;
+            // Drop down menu
+            case FieldTypeEnum.FOREIGN_KEY:
+                $newElem = $('<select>');
+                Object.keys(pageData.tableColumns[col].fkDict).forEach(function(key) {
+                    var val = pageData.tableColumns[col].fkDict[key];
+                    // Hidden value = fk key, Text = fk fetched value
+                    var $newElemOption =  $('<option>')
+                        .attr({
+                            value: key
+                        })
+                        .text(val);
+                    $newElem.append($newElemOption);
+                });
+                // Set currently selected item if valid
+                var selectedKey = pageData.tableRows[row].rawItems[col];
+                if(pageData.tableColumns[col].fkDict[selectedKey] !== undefined) {
+                    $newElem.val(selectedKey);
+                }
+                break;
+            default:
+                $newElem = undefined;
+                break;
+        }
+
+        return $newElem;
+    }
+
+    this.buildNewRowElement = function() {
+        var $newRow = parent.buildRowElement(pageData.addEmptyRow());
+        return $newRow;
+    }
+
+    this.buildRowElement = function(row) {
+        var $newRow = $('<tr>');
+
+        for(var i = 0; i < pageData.tableColumns.length; i++) {
+            var $staticInnerItem = parent.buildStaticCellElement(row, i);
+            var $editInnerItem = parent.buildEditableCellElement(row, i);
+
+            // Create new data item
+            var $newCell = $('<td>');
+
+            // If editable add the hidden element as well
+            if($editInnerItem !== undefined) {
+                $staticInnerItem.addClass(CLASS_EDITABLE_TABLE_CELL);
+                $editInnerItem.addClass(CLASS_EDITING_TABLE_CELL);
+                //$editInnerItem.hide();
+                $newCell.append($editInnerItem);
+            }
+            $newCell.append($staticInnerItem);
+
+            // Append new item to row
+            $newRow.append($newCell);
+        }
+
+        // Add the delete button
+        var $deleteBtn = $('<button>')
+            .attr({
+                type: 'button'
+            })
+            .addClass(CLASS_DELETE_BUTTON)
+            .text(TEXT_DELETE_BUTTON);
+        $newRow.append($('<td>').append($deleteBtn));
+
+        return $newRow;
+    }
+
+    // Fills in the table from pageData
+    this.buildTable = function() {
+        // Clear table
+        editableTable.$element.empty();
+
+        // Header
+        var $tableHead = $('<thead>');
+        editableTable.$element.append($tableHead);
+
+        var $newHeader = $('<tr>');
+        for (tableColumn of pageData.tableColumns) {
+            var $newHeaderItem = $('<td>')
+                .text(tableColumn.columnMeta.displayName);
+            $newHeader.append($newHeaderItem);
+        }
+        $tableHead.append($newHeader);
+
+        // Body
+        var $tableBody = $('<tbody>');
+        editableTable.$element.append($tableBody);
+    }
+}
+
+// -- Table DOM object --
+
+function EditableTable() {
+    this.$element = $('#editable-table');
+
+    var parent = this;
+
+    // Turns on editing for full row
+    this._enableRowEdit = function(row) {
+        for(var i = 0; i < pageData.tableColumns.length; i++) {
+            parent.enableCellEdit(row, i);
+        }
+    }
+
+    this.enableCellEdit = function(row, col) {
+        var $thisCell = parent._getCellElem(row, col);
+
+        var $staticElem = $thisCell.find('.' + CLASS_EDITABLE_TABLE_CELL);
+        var $editElem = $thisCell.find('.' + CLASS_EDITABLE_TABLE_CELL);
+
+        if($staticElem !== undefined && $editElem !== undefined) {
+            $staticElem.hide();
+            $editElem.show();
+        }
+    }
+
+    this._markCellEdited = function(row, col) {
+        var $thisCell = parent._getCellElem(row, col);
+        $thisCell.addClass(CLASS_MODIFIED_INDICATOR);
+    }
+
+    this._markRowDeleted = function(row, isDeleted) {
+        var $thisRow = parent._getRowElem(row);
+        if(isDeleted) {
+            $thisRow.addClass(CLASS_DELETED_INDICATOR);
+        } else {
+
+        }
+    }
+
+    this._getCellElem = function(row, col) {
+        return $("td", parent._getRowElem(row)).eq(col);
+    }
+
+    this._getRowElem = function(row) {
+        return $('tr', parent.$element).eq(row);
+    }
+
+    this.createRow = function() {
+        var $rowElem = elementBuilder.buildNewRowElement();
+        parent.$element.find('tbody').append($rowElem);
+        parent._enableRowEdit($rowElem.index());
+    }
+
+    this.updateCell = function(row, col, rawValue, displayValue) {
+        parent._markCellEdited(row, col);
+        var tableRow = pageData.tableRows[row];
+        tableRow.rawItems[col] = rawValue;
+        tableRow.displayedItems[col] = displayValue;
+        tableRow.rowState = RowStateEnum.UPDATED;
+    }
+
+    this.deleteRow = function(row) {
+        parent._markRowDeleted(row, true);
+        var tableRow = pageData.tableRows[row];
+        tableRow.rowState = RowStateEnum.DELETED;
+    }
+
+    this.undeleteRow = function(row) {
+        parent._markRowDeleted(row, false);
+        var tableRow = pageData.tableRows[row];
+        tableRow.rowState = RowStateEnum.UPDATED;
+    }
+
+    this.undo = function() {
+        // TODO
+    }
+
+    this.populate = function() {
+        var $tableBody = parent.$element.find('tbody');
+        $tableBody.empty();
+
+        for(var i = 0; i < pageData.tableRows.length; i++) {
+            var $newRow = elementBuilder.buildRowElement(i);
+            $tableBody.append($newRow);
         }
     }
 }
 
 // -- Global vars --
 
-var $TABLE = $('.editable-table');
 var pageData = new PageData();
 var pageRequests = new PageRequests();
+var elementBuilder = new ElementBuilder();
+var editableTable = new EditableTable();
 
 // -- Init --
 
@@ -248,231 +480,41 @@ $(document).ready(function() {
     }
 
     pageData.init(routesData);
+    elementBuilder.buildTable();
     pageRequests.refreshPage();
 });
 
-// -- HTML table modifications --
-
-function tableAddEmptyRow() {
-    var newRowContents = [];
-
-    for(fieldType of pageData.tableFieldTypes) {
-        var newRowItem = UNDEFINED_ITEM_VALUE;
-        switch(fieldType) {
-            case FieldTypeEnum.TEXT:
-                newRowItem = "";
-                break;
-            case FieldTypeEnum.NUMBER:
-                newRowItem = 0;
-                break;
-        }
-        newRowContents.push(newRowItem);
-    }
-    pageData.tableContents.push(newRowContents);
-    pageData.rowStates.push(RowStateEnum.UPDATED);
-    tableAddRow(newRowContents);
-}
-
-function tableAddRow(rowData) {
-    var $newRow = $('<tr>');
-    for(colData of rowData) {
-        // Create new data item
-        var $newCol = $('<td>')
-            .text(colData);
-
-        // Append new item to row
-        $newRow.append($newCol);
-    }
-
-    // Create mod buttons
-    var $editBtn = $('<button>')
-        .attr({
-            type: 'button'
-        })
-        .addClass(CLASS_EDIT_BUTTON_NOT_EDITING)
-        .text(TEXT_EDIT_BUTTON_NOT_EDITING);
-
-    var $deleteBtn = $('<button>')
-        .attr({
-            type: 'button'
-        })
-        .addClass(CLASS_DELETE_BUTTON)
-        .text(TEXT_DELETE_BUTTON);
-
-    // Append mod buttons to row
-    $newRow.append($('<td>').append($editBtn));
-    $newRow.append($('<td>').append($deleteBtn));
-
-    // Add row to table body
-    $TABLE.find('tbody').append($newRow);
-}
-
-// Fills in the table from pageData
-function tableDraw() {
-    // Clear table
-    $TABLE.empty();
-
-    // Header
-    var $tableHead = $('<thead>');
-    $TABLE.append($tableHead);
-
-    var $newHeader = $('<tr>');
-    for (tableColumn of pageData.tableColumns) {
-        var $newHeaderItem = $('<td>')
-            .text(tableColumn.columnMeta.displayName);
-        $newHeader.append($newHeaderItem);
-    }
-    $tableHead.append($newHeader);
-
-    // Body
-    var $tableBody = $('<tbody>');
-    $TABLE.append($tableBody);
-
-    for (tableRow of pageData.tableRows) {
-        tableAddRow(tableRow.displayedItems);
-    }
-}
-
 // -- HTML listeners --
 
+// Listen for click on static cell field, changes static -> editable
+$(document).on('click', '.' + CLASS_EDITABLE_TABLE_CELL, function() {
+    console.log("Clicked: " + row + ", " + col);
+    var row = $(this).closest("tr").index();
+    var col = $(this).closest("td").index();
+    editableTable.enableCellEdit(row, col);
+});
+
 // Listen for changes in text fields to update the table contents
-$(document).on('change', '.' + CLASS_EDITABLE_TABLE_ITEM, function() {
-    var row, col;
+$(document).on('change', '.' + CLASS_EDITING_TABLE_CELL, function() {
+    var row = $(this).closest("tr").index();
+    var col = $(this).closest("td").index();
+    console.log("Changed: " + row + ", " + col);
+    if($(this).is('input')) {
+        editableTable.updateCell(row, col, $(this).val(), $(this).val());
 
-    var $thisRow = $(this).closest('tr');
-    var $thisItem = $(this).closest("td");
-
-    // Set cell color
-    $thisItem.addClass(CLASS_MODIFIED_INDICATOR);
-
-    col = $thisItem.index();
-    row = $thisRow.index();
-
-    console.log("Changed: (" + row + ", " + col + ")");
-
-    // TODO test for all field types -- should work for selects as well
-    pageData.tableContents[row][col] = $(this).val();
-});
-
-
-function rowDisableEditing() {
-    // Find parent TR
-    var row, col;
-    $(this).closest('tr').each(function() {
-        row = $(this).index();
-        // Change all TD to plain text fields
-        $(this).find('td').each (function() {
-            // Set innerhtml to respective text
-            col = $(this).index();
-            // Make sure we ignore buttons
-            if(col < pageData.tableColumns.length) {
-                $(this).text(pageData.tableContents[row][col]);
-            }
-            // TODO set color class based on status
-        });
-    });
-
-    // Set button text and class
-    $(this).text(TEXT_EDIT_BUTTON_NOT_EDITING);
-    $(this).removeClass(CLASS_EDIT_BUTTON_EDITING).addClass(CLASS_EDIT_BUTTON_NOT_EDITING);
-}
-
-// Edit button on on a row, while editing
-$(document).on('click', '.' + CLASS_EDIT_BUTTON_EDITING, function() {
-    $(this).each(rowDisableEditing);
-    var $thisRow = $(this).closest('tr');
-    var rowIndex = $thisRow.index();
-    pageData.rowStates[rowIndex] = RowStateEnum.UPDATED;
-});
-
-// TODO based on row, col
-function getEditableField(row, col) {
-    var $newElem;
-    var fieldType = pageData.tableFieldTypes[col];
-    var fieldContent = pageData.tableContents[row][col];
-    console.log(col + ": " + fieldType)
-
-    // Do a lookup for the intended type
-    switch(fieldType) {
-        // Text field
-        case FieldTypeEnum.TEXT:
-            $newElem = $('<input>').attr({
-                type: 'text',
-                value: fieldContent
-            });
-            break;
-        // Number field
-        case FieldTypeEnum.NUMBER:
-            $newElem = $('<input>').attr({
-                type: 'number',
-                min: '0',
-                value: fieldContent
-            });
-            break;
-        case FieldTypeEnum.FOREIGN_KEY:
-            $newElem = undefined;
-            break;
-        default:
-            $newElem = undefined;
-            break;
+    } else if($(this).is('option')) {
+        $selection = $(this).find("option:selected");
+        editableTable.updateCell(row, col, $selection.val(), $selection.text());
     }
 
-    return $newElem;
-}
-
-// Edit button on on a row, while not editing
-$(document).on('click', '.' + CLASS_EDIT_BUTTON_NOT_EDITING, function () {
-    var row, col;
-    // From parent TR
-    $(this).closest('tr').each(function() {
-        row = $(this).index();
-        // Change all TD to plain text fields
-        $(this).find('td').each (function() {
-            col = $(this).index();
-            console.log("Edit: (" + row + ", " + col + ")");
-
-            // Make sure we ignore buttons
-            if(col < pageData.tableHeader.length) {
-                // Add proper editable field element
-                var $newElem = getEditableField(row, col);
-                if ($newElem !== undefined) {
-                    // Clear contents first
-                    $(this).empty();
-
-                    // Mark class for edit listener
-                    $newElem.addClass(CLASS_EDITABLE_TABLE_ITEM);
-
-                    // Insert into TD
-                    $(this).append($newElem);
-                }
-            }
-        });
-    });
-
-    $(this).text(TEXT_EDIT_BUTTON_EDITING);
-    $(this).removeClass(CLASS_EDIT_BUTTON_NOT_EDITING).addClass(CLASS_EDIT_BUTTON_EDITING);
 });
 
 // Delete button in row
 $(document).on('click', '.' + CLASS_DELETE_BUTTON, function () {
-    // End editing if happening on this row
-    $(this).each(rowDisableEditing);
 
     // Get current row
-    var $thisRow = $(this).closest('tr');
-    var $thisItem = $(this).closest('td');
-
-    // Disable edit button in this row
-    $thisRow.find('.' + CLASS_EDIT_BUTTON_NOT_EDITING).attr('disabled', true);
-    $thisRow.find('.' + CLASS_EDIT_BUTTON_EDITING).attr('disabled', true);
-
-    // TODO Strikethrough
-    $thisRow.addClass(CLASS_DELETED_INDICATOR);
-
-    // Set row status
-    var rowIndex = $thisRow.index();
-    pageData.rowStates[rowIndex] = RowStateEnum.DELETED;
-
+    var row = $(this).closest('tr').index;
+    editableTable.deleteRow(row);
 
     $(this).text(TEXT_DELETE_BUTTON_DELETED);
     $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
@@ -480,38 +522,27 @@ $(document).on('click', '.' + CLASS_DELETE_BUTTON, function () {
 
 // Undelete button in row
 $(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
-
     // Get current row
-    var $thisRow = $(this).closest('tr');
+    var row = $(this).closest('tr').index;
+    editableTable.deleteRow(row);
 
-    // Enable edit button on this row
-    $thisRow.find('.' + CLASS_EDIT_BUTTON_NOT_EDITING).attr('disabled', false);
-    $thisRow.find('.' + CLASS_EDIT_BUTTON_EDITING).attr('disabled', false);
-
-    // TODO Remove strikethrough
-    $thisRow.removeClass(CLASS_DELETED_INDICATOR);
-
-    // Set row status
-    var rowIndex = $thisRow.index();
-    pageData.rowStates[rowIndex] = RowStateEnum.UPDATED;
-
-    $(this).text(TEXT_DELETE_BUTTON);
-    $(this).removeClass(CLASS_DELETE_BUTTON_DELETED).addClass(CLASS_DELETE_BUTTON);
+    $(this).text(TEXT_DELETE_BUTTON_DELETED);
+    $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
 });
 
-$('.' + CLASS_ADD_BUTTON).click(function () {
-    tableAddEmptyRow();
+$(document).on('click', '.' + CLASS_ADD_BUTTON, function() {
+    editableTable.createRow();
 });
 
-$('.' + CLASS_SAVE_BUTTON).click(function () {
+$(document).on('click', '.' + CLASS_SAVE_BUTTON, function () {
     commitTableChanges();
     // Make an AJAX request to commit rows to the DB
 });
 
-$('.' + CLASS_RELOAD_BUTTON).click(function () {
+$(document).on('click', '.' + CLASS_RELOAD_BUTTON, function () {
     var c = confirm("This will delete your changes. Are you sure?");
     if(c) {
-        ajaxRefreshTable();
+        pageRequests.refreshPage();
     }
 
     // Make an AJAX request to commit rows to the DB
