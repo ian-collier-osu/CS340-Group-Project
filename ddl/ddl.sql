@@ -195,13 +195,10 @@ CREATE TABLE `trimlines` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `model` int(11) DEFAULT NULL,
-  `default_color` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
   KEY `model` (`model`),
-  KEY `default_color` (`default_color`),
-  CONSTRAINT `trimlines_ibfk_3` FOREIGN KEY (`model`) REFERENCES `models` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `trimlines_ibfk_4` FOREIGN KEY (`default_color`) REFERENCES `colors` (`id`) ON DELETE SET NULL
+  CONSTRAINT `trimlines_ibfk_3` FOREIGN KEY (`model`) REFERENCES `models` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -211,7 +208,7 @@ CREATE TABLE `trimlines` (
 
 LOCK TABLES `trimlines` WRITE;
 /*!40000 ALTER TABLE `trimlines` DISABLE KEYS */;
-INSERT INTO `trimlines` VALUES (1,'Weekdayer',1,8),(3,'Ultra Luxe',2,10);
+INSERT INTO `trimlines` VALUES (1,'Weekdayer',1),(3,'Ultra Luxe',2);
 /*!40000 ALTER TABLE `trimlines` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -224,4 +221,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-05-28  1:33:27
+-- Dump completed on 2019-06-04 14:18:22

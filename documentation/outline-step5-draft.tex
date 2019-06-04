@@ -16,53 +16,77 @@
 \begin{document}
 
 Group 19 --- Michael Andrews and Ian Collier
-Project Step 6
+Project Step 3
 
 \section*{\textsc{url} for draft \textsc{html}}
 
 \texttt{www.iancollier.host}
 
-\section*{Outline}
+Backup at: \texttt{http://flip3.engr.oregonstate.edu:8343}
 
+\section*{Outline}
 
 The project will be a simplified and abstracted view of an automotive suppply chain.  The selection of automobiles is arbitrary, and intended simply to make the relationships intuitive for the user.  The basic intent is to have a series of relationships that will allow the user to track parts suppliers, parts requirements, and orders in such a way that they can easily determine at any given time what supplies need to be procured, and at what price, to meet orders.
 
-\section*{Changes for Final Version}
+\section*{Changes for Step 2}
 
-The default\textunderscore color key was removed from the trimlines table.  It proved infeasible to enforce a color that was a valid choice for the trimline; i.e. that the color referenced existed in a row in trimline\textunderscore colors which also referenced the trimline itself.  Rather than enforce this on the front-end, it was decided that having a default color simply did not add enough value to the app to justify the complexity.
+\begin{itemize}
 
-\section*{Changes for Step 6 Draft}
+\item Which keys are foreign (and which domestic) has been clarified, both in the Outline and in the Schema.  (Foreign keys in the schema are now indicated by an asterisk.)
 
-Additional front-end work, schema reconciled with changes, trimline\textunderscore colors rolled out.
+\item The Model-Colors relationship has been replaced with a Trimline-Colors relationship, and removed as an entity-in-itself.  This suggestion was made in both TA and peer feedback.  Additionally, because this is a many-to-many relationship table, that table no longer has its own auto-incrementing key.
 
-\section*{Feedback for Step 5 Draft}
+\item A suggestion was made in group review to add default values for several attributes which cannot be null.  That suggestion has not been adopted, since the database is (within its own fictional universe) intended to reflect physical realities; a default value for the "Quantity on Hand" attribute of the "Parts" entity, which was one of the suggestions, could result in the database being automatically populated with inaccurate data.  The correct behavior if an attempt is made to add rows without knowing the values for those attributes should be to fail with an error.  Similarly, if a customer attempts to order a car but does not specify either a trimline (which implies a model) or a model (which defaults to a trimline,) they should be told they need to pick something.
 
-\begin{quotation}
-On the colors page, the edit seems to be working as intended.  However, when I try to add a new color, it doesn't show the name on the color after I commit the change.  Delete also seems to be working as intended.  I also tried adding to the models page, but I can't seem to pick a base trimline.
-\end{quotation}
+\item The \textsc{erd} has been embiggened.
 
----Kendrick Chu
+\item The Base Model attribute of Model has had its name changed to Base Trimline rather than making it recursive; the previous name was a typo.
 
-\begin{quotation}
-I wanna start by saying i really love the feature that changes the edited field orange. I noticed you couldnt edit the Base Trimline of the Models, but besides that everything looks sweet!
-\end{quotation}
+\end{itemize}
 
----Zech DeCleene
+\section*{Changes for Step 3 Draft}
 
-\begin{quotation}
-The way your team chose to implement the edit and delete functionality is so cool! I wouldn't have thought of keeping the item semi visible behind a crossed out line like that but I like the way it looks. Also the easily visible orange color to show edits is nice as well and really pops on the white background. As Zech mentioned the only thing I noticed was not being able to edit the base trimline.
-\end{quotation}
+\begin{itemize}
 
----Story P. Caplan
+\item Key and table names have been changed to lower case, underscore separated.  Keys named 'key' have been changed to 'id' because MariaDB considers key a reserved word.
 
-We are addressing the base trimline issue, and we intend for the final version to always show user-meaningful names rather than ids.
+\item Both attributes in model{\textunderscore}colors have had on delete cascade added to them.
 
-\subsection*{Additional Changes for Step 5 Draft}
+\item Trimline's default model now cascades on deletion.
 
-We elected to add an integer id field to the color table, to make it easier to work with on the front end.
+\item Trimline's default color now cascades to null on deletion.
 
+\end{itemize}
 
-\section*{Changes for Step 4 Draft}
+\section*{Review Feedback on Step 3 Draft}
+
+Only one peer review had specific questions and changes; it's included below:
+
+\begin{itemize}
+
+\item "Your DDL file looks good. I was able to successfully import it into phpmyadmin with no errors or issues. I imported again after tables had been created and your drop table if exists statements also look good! Also the samples data was successfully inserted into the tables.
+
+"Looking at your HTML I see on your "Body" page that you have a search field. I know it is still early so you will probably make changes, but maybe specify what can be searched there. Only models? You could also throw and update table header and delete table header in your html table.
+
+"What will the "save changes" buttons do? Will that be a type of 'update' function? If I decide to change trimline and color on the drop downs on the Order page, will hitting save changes update it? Will it update only the ones that I have changed they drop down values or specific ones?
+
+"One question I have is about colors. The color name is the primary key but how are you handling potential duplicate colors being entered into the table?
+
+"I don't have any comments on your query file, everything looks good to me. You have all the insert, delete, and update statements needed as well as some really good query statements that I think will work really well with your database. Good job!
+
+With regard to colors, duplicates are not an issue.  Because a primary key needs to be unique, duplicates cannot be entered, and that's intended behavior.  A duplicate color would serve no purpose.
+
+With regard to what the update and save functions do, the intended behavior will be for update to populate a form with the fields of the item, and for save to commit the item back to the database, incorporating any (legal) changes that might have been made.  (The auto-incrementing keys will be reported, but will not be alterable.)
+
+With regard to the search behavior, a new page has been added with checkboxes to allow for searching any or all of Models, Trimlines, Orders, and Parts by name.
+
+\end{itemize}
+
+\section{Changes for Step 3 Final}
+
+Dedicated search page added; queries added to support its behavior.
+
+\section{Changes for Step 4 Draft}
 
 HTML reworked.  TA feedback was received on the due date of the draft as follows:
 
@@ -77,8 +101,7 @@ This feedback came too late to incorporate into the draft version, so we'll work
 
 A typo in the DDL was corrected, which was causing a foreign key in models to refer to a nonexistant table.
 
-
-\section*{Feedback on Step 4 Draft}
+\section{Feedback on Step 4 Draft}
 
 \begin{quotation}
 
@@ -186,70 +209,9 @@ It's hard to fully review this step yet since CREATE and READ functionalities se
 
 The missing Trimline-Colors table was a recurring theme, and it's a valid one.  Since that will require some restructing, there's a modified version of the DDL available, but it hasn't been rolled into the HTML yet, so that version of the DB is not live at present.
 
-\subsection*{Additional Changes for Step 5 Draft}
+\subsection{Additional Changes for Step 5 Draft}
 
 We elected to add an integer id field to the color table, to make it easier to work with on the front end.
-
-\section*{Changes for Step 3 Draft}
-
-\begin{itemize}
-
-\item Key and table names have been changed to lower case, underscore separated.  Keys named 'key' have been changed to 'id' because MariaDB considers key a reserved word.
-
-\item Both attributes in model{\textunderscore}colors have had on delete cascade added to them.
-
-\item Trimline's default model now cascades on deletion.
-
-\item Trimline's default color now cascades to null on deletion.
-
-\end{itemize}
-
-\section*{Review Feedback on Step 3 Draft}
-
-Only one peer review had specific questions and changes; it's included below:
-
-\begin{itemize}
-
-\item "Your DDL file looks good. I was able to successfully import it into phpmyadmin with no errors or issues. I imported again after tables had been created and your drop table if exists statements also look good! Also the samples data was successfully inserted into the tables.
-
-"Looking at your HTML I see on your "Body" page that you have a search field. I know it is still early so you will probably make changes, but maybe specify what can be searched there. Only models? You could also throw and update table header and delete table header in your html table.
-
-"What will the "save changes" buttons do? Will that be a type of 'update' function? If I decide to change trimline and color on the drop downs on the Order page, will hitting save changes update it? Will it update only the ones that I have changed they drop down values or specific ones?
-
-"One question I have is about colors. The color name is the primary key but how are you handling potential duplicate colors being entered into the table?
-
-"I don't have any comments on your query file, everything looks good to me. You have all the insert, delete, and update statements needed as well as some really good query statements that I think will work really well with your database. Good job!
-
-With regard to colors, duplicates are not an issue.  Because a primary key needs to be unique, duplicates cannot be entered, and that's intended behavior.  A duplicate color would serve no purpose.
-
-With regard to what the update and save functions do, the intended behavior will be for update to populate a form with the fields of the item, and for save to commit the item back to the database, incorporating any (legal) changes that might have been made.  (The auto-incrementing keys will be reported, but will not be alterable.)
-
-With regard to the search behavior, a new page has been added with checkboxes to allow for searching any or all of Models, Trimlines, Orders, and Parts by name.
-
-\end{itemize}
-
-\section*{Changes for Step 3 Final}
-
-Dedicated search page added; queries added to support its behavior.
-
-
-
-\section*{Changes for Step 2}
-
-\begin{itemize}
-
-\item Which keys are foreign (and which domestic) has been clarified, both in the Outline and in the Schema.  (Foreign keys in the schema are now indicated by an asterisk.)
-
-\item The Model-Colors relationship has been replaced with a Trimline-Colors relationship, and removed as an entity-in-itself.  This suggestion was made in both TA and peer feedback.  Additionally, because this is a many-to-many relationship table, that table no longer has its own auto-incrementing key.
-
-\item A suggestion was made in group review to add default values for several attributes which cannot be null.  That suggestion has not been adopted, since the database is (within its own fictional universe) intended to reflect physical realities; a default value for the "Quantity on Hand" attribute of the "Parts" entity, which was one of the suggestions, could result in the database being automatically populated with inaccurate data.  The correct behavior if an attempt is made to add rows without knowing the values for those attributes should be to fail with an error.  Similarly, if a customer attempts to order a car but does not specify either a trimline (which implies a model) or a model (which defaults to a trimline,) they should be told they need to pick something.
-
-\item The \textsc{erd} has been embiggened.
-
-\item The Base Model attribute of Model has had its name changed to Base Trimline rather than making it recursive; the previous name was a typo.
-
-\end{itemize}
-
 
 \section*{Entities}
 
@@ -290,6 +252,9 @@ The other properties of cars will be simulated through relationships with other 
 	
 	Each Trimline must have exactly one Model associated with it; this field will store the key of that Model.  It cannot be null.  This should cascade on deletion.
 	
+	\item \emph{default{\textunderscore}color (Foreign Key)}
+	
+	Each Trimline needs a default color.  Integer, must be the key of a Color.  Should cascade to null.
 
 \end{itemize}
 
@@ -414,7 +379,7 @@ Each order must specify a Color which must be available for the Model associated
 \section*{Schema}
 
 \begin{figure}[H]
-	\centerline{\includegraphics[scale=.6]{schema.png}}
+	\centerline{\includegraphics[scale=.55]{schema.png}}
 \end{figure}
 
 
