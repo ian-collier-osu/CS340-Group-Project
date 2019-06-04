@@ -16,7 +16,7 @@ const TEXT_DELETE_BUTTON = "Delete";
 const CLASS_DELETE_BUTTON = "table-row-btn-delete";
 
 // TODO fix the undelete
-const TEXT_DELETE_BUTTON_DELETED = "Deleted";
+const TEXT_DELETE_BUTTON_DELETED = "Undelete";
 const CLASS_DELETE_BUTTON_DELETED = "table-row-btn-undelete";
 
 // Editable field marker
@@ -47,8 +47,43 @@ const RowStateEnum = {
 
 // Functions for page AJAX requests
 function PageRequests() {
+    this.commitRequestCounter = 0;
 
     var parent = this;
+
+    this.commitTableChanges = function() {
+
+        // Count the requests needed to fulfill a commit
+        parent.commitRequestCounter = 0;
+        for(tableRow of pageData.tableRows) {
+            if(tableRow.rowState != RowStateEnum.UNMODIFIED) {
+                parent.commitRequestCounter++;
+            }
+        }
+
+        if(parent.commitRequestCounter == 0) {
+            alert("No changes to commit.");
+            return;
+        }
+
+        // Show loading thing
+        editableTable.loadStart(1000);
+
+        // Execute the requests
+        for(var i = 0; i < pageData.tableRows.length; i++) {
+            var tableRow = pageData.tableRows[i];
+
+            switch (tableRow.rowState) {
+                case RowStateEnum.DELETED:
+                    parent._commitDelete(tableRow);
+                    break;
+                case RowStateEnum.UPDATED:
+                    parent._commitUpdate(tableRow);
+                    break;
+            }
+        }
+    }
+
 
     this.refreshPage = function() {
         // Fetch main data
@@ -80,6 +115,7 @@ function PageRequests() {
                             pageData.setTableFKData(columnIndex, res);
                             // Redraw
                             editableTable.populate();
+                            editableTable.loadStop(1000);
                         },
                         error : function(res, error)
                         {
@@ -89,19 +125,92 @@ function PageRequests() {
                 }
                 reqFunc(i);
             }
-
             i++;
+        }
+    }
+
+
+    this._commitDelete = function(rowContent) {
+        if(tableRow.primaryKey != null) {
+            // Only delete if not a new row
+            console.log("Delete commit.");
+            $.ajax({
+                url : routesData.mainUrl + "/" + tableRow.primaryKey,
+                type : 'DELETE',
+                success : function(data) {
+                    parent._commitFinish();
+                },
+                error : function(request,error)
+                {
+                    parent._commitError(request);
+                }
+            });
+        } else {
+            parent._commitFinish();
+        }
+    }
+
+    this._commitUpdate = function(rowContent) {
+        if(tableRow.primaryKey != null) {
+            // If not a new row just update
+            var ajaxUpdateData = {};
+            for(i = 0; i < pageData.tableColumns.length; i++) {
+                var key = pageData.tableColumns[i].columnMeta.keyName;
+                var value = rowContent.rawItems[i];
+                ajaxUpdateData[key] = value;
+            }
+
+            console.log("Update commit.");
+            $.ajax({
+                url : routesData.mainUrl + "/" + tableRow.primaryKey,
+                type : 'POST',
+                data : ajaxUpdateData,
+                dataType: 'json',
+                success : function(data) {
+                    parent._commitFinish();
+                },
+                error : function(request,error)
+                {
+                    parent._commitError(request);
+                }
+            });
+
+        } else {
+            console.log("Create commit.");
+            // Create
+            $.ajax({
+                url : routesData.mainUrl,
+                type : 'PUT',
+                success : function(data) {
+                    parent._commitFinish();
+                },
+                error : function(request,error)
+                {
+                    parent._commitError(request);
+                }
+            });
+        }
+    }
+
+    this._commitFinish = function() {
+        parent.commitRequestCounter--;
+        if(parent.commitRequestCounter <= 0) {
+            editableTable.loadStop(1000);
+            pageRequests.refreshPage();
         }
     }
 
     this._refreshError = function(res) {
         alert("Server error: Failed to load page data.");
+        // Go back?
         console.log(JSON.stringify(res));
+        editableTable.loadStop(1000);
     }
 
     this._commitError = function(res) {
         alert("Server error: Failed to commit.");
         console.log(JSON.stringify(res));
+        editableTable.loadStop(1000);
     }
 }
 
@@ -133,6 +242,13 @@ function PageData() {
     this.tableRows = [];
 
     var parent = this;
+
+    this.printDebug = function() {
+        console.log("Primary Key: " + parent.primaryKey);
+        console.log("Main Route: " + parent.mainRoute);
+        console.log("Table Columns: " + parent.tableColumns);
+        console.log("Table Rows: " + parent.tableRows);
+    }
 
     // Initialize from passed in data
     this.init = function(routesData) {
@@ -301,6 +417,7 @@ function ElementBuilder() {
                 });
                 // Set currently selected item if valid
                 var selectedKey = pageData.tableRows[row].rawItems[col];
+                console.log("selected key: " + selectedKey);
                 if(pageData.tableColumns[col].fkDict[selectedKey] !== undefined) {
                     $newElem.val(selectedKey);
                 }
@@ -314,16 +431,18 @@ function ElementBuilder() {
     }
 
     this.buildNewRowElement = function() {
-        var $newRow = parent.buildRowElement(pageData.addEmptyRow());
+        var $newRow = parent.buildRowElement(pageData.addEmptyRow(), true);
         return $newRow;
     }
 
-    this.buildRowElement = function(row) {
+    this.buildRowElement = function(row, isStatic) {
         var $newRow = $('<tr>');
 
         for(var i = 0; i < pageData.tableColumns.length; i++) {
             var $staticInnerItem = parent.buildStaticCellElement(row, i);
-            var $editInnerItem = parent.buildEditableCellElement(row, i);
+            if(!isStatic) {
+                var $editInnerItem = parent.buildEditableCellElement(row, i);
+            }
 
             // Create new data item
             var $newCell = $('<td>');
@@ -332,7 +451,7 @@ function ElementBuilder() {
             if($editInnerItem !== undefined) {
                 $staticInnerItem.addClass(CLASS_EDITABLE_TABLE_CELL);
                 $editInnerItem.addClass(CLASS_EDITING_TABLE_CELL);
-                //$editInnerItem.hide();
+                $editInnerItem.hide();
                 $newCell.append($editInnerItem);
             }
             $newCell.append($staticInnerItem);
@@ -390,11 +509,31 @@ function EditableTable() {
         }
     }
 
-    this.enableCellEdit = function(row, col) {
+    this._disableRowEdit = function(row) {
+        for(var i = 0; i < pageData.tableColumns.length; i++) {
+            parent.disableCellEdit(row, i);
+        }
+    }
+
+    this.disableCellEdit = function(row, col) {
         var $thisCell = parent._getCellElem(row, col);
 
         var $staticElem = $thisCell.find('.' + CLASS_EDITABLE_TABLE_CELL);
-        var $editElem = $thisCell.find('.' + CLASS_EDITABLE_TABLE_CELL);
+        var $editElem = $thisCell.find('.' + CLASS_EDITING_TABLE_CELL);
+
+        if($staticElem !== undefined && $editElem !== undefined) {
+            $staticElem.show();
+            $editElem.hide();
+        }
+    }
+
+    this.enableCellEdit = function(row, col) {
+        if(parent._getRowElem(row).hasClass(CLASS_DELETED_INDICATOR)) return;
+
+        var $thisCell = parent._getCellElem(row, col);
+
+        var $staticElem = $thisCell.find('.' + CLASS_EDITABLE_TABLE_CELL);
+        var $editElem = $thisCell.find('.' + CLASS_EDITING_TABLE_CELL);
 
         if($staticElem !== undefined && $editElem !== undefined) {
             $staticElem.hide();
@@ -402,8 +541,9 @@ function EditableTable() {
         }
     }
 
-    this._markCellEdited = function(row, col) {
+    this._markCellEdited = function(row, col, displayVal) {
         var $thisCell = parent._getCellElem(row, col);
+        $thisCell.find('.' + CLASS_EDITABLE_TABLE_CELL).text(displayVal);
         $thisCell.addClass(CLASS_MODIFIED_INDICATOR);
     }
 
@@ -412,7 +552,7 @@ function EditableTable() {
         if(isDeleted) {
             $thisRow.addClass(CLASS_DELETED_INDICATOR);
         } else {
-
+            $thisRow.removeClass(CLASS_DELETED_INDICATOR);
         }
     }
 
@@ -421,7 +561,7 @@ function EditableTable() {
     }
 
     this._getRowElem = function(row) {
-        return $('tr', parent.$element).eq(row);
+        return $('tr', parent.$element).eq(row + 1);
     }
 
     this.createRow = function() {
@@ -431,7 +571,7 @@ function EditableTable() {
     }
 
     this.updateCell = function(row, col, rawValue, displayValue) {
-        parent._markCellEdited(row, col);
+        parent._markCellEdited(row, col, displayValue);
         var tableRow = pageData.tableRows[row];
         tableRow.rawItems[col] = rawValue;
         tableRow.displayedItems[col] = displayValue;
@@ -439,9 +579,15 @@ function EditableTable() {
     }
 
     this.deleteRow = function(row) {
-        parent._markRowDeleted(row, true);
         var tableRow = pageData.tableRows[row];
-        tableRow.rowState = RowStateEnum.DELETED;
+        if(tableRow.rowState == RowStateEnum.DELETED) {
+            parent._markRowDeleted(row, false);
+            tableRow.rowState = RowStateEnum.UPDATED;
+        } else {
+            parent._disableRowEdit(row);
+            parent._markRowDeleted(row, true);
+            tableRow.rowState = RowStateEnum.DELETED;
+        }
     }
 
     this.undeleteRow = function(row) {
@@ -459,9 +605,19 @@ function EditableTable() {
         $tableBody.empty();
 
         for(var i = 0; i < pageData.tableRows.length; i++) {
-            var $newRow = elementBuilder.buildRowElement(i);
+            var $newRow = elementBuilder.buildRowElement(i, false);
             $tableBody.append($newRow);
         }
+    }
+
+    this.loadStart = function(delay) {
+        $('#loadingOverlay').fadeIn(delay);
+        $('#mainContent').fadeOut(delay);
+    }
+
+    this.loadStop = function(delay) {
+        $('#loadingOverlay').fadeOut(delay);
+        $('#mainContent').fadeIn(delay);
     }
 }
 
@@ -475,6 +631,8 @@ var editableTable = new EditableTable();
 // -- Init --
 
 $(document).ready(function() {
+    editableTable.loadStart(0);
+
     if(routesData == undefined) {
         alert("Error: Meta file unspecified.");
     }
@@ -482,229 +640,70 @@ $(document).ready(function() {
     pageData.init(routesData);
     elementBuilder.buildTable();
     pageRequests.refreshPage();
-});
+    pageData.printDebug();
 
-// -- HTML listeners --
+    // -- HTML listeners --
 
-// Listen for click on static cell field, changes static -> editable
-$(document).on('click', '.' + CLASS_EDITABLE_TABLE_CELL, function() {
-    console.log("Clicked: " + row + ", " + col);
-    var row = $(this).closest("tr").index();
-    var col = $(this).closest("td").index();
-    editableTable.enableCellEdit(row, col);
-});
+    // Listen for click on static cell field, changes static -> editable
+    $(document).on('click', '.' + CLASS_EDITABLE_TABLE_CELL, function() {
+        var row = $(this).closest("tr").index();
+        var col = $(this).closest("td").index();
+        console.log("Clicked: " + row + ", " + col);
+        editableTable.enableCellEdit(row, col);
+    });
 
-// Listen for changes in text fields to update the table contents
-$(document).on('change', '.' + CLASS_EDITING_TABLE_CELL, function() {
-    var row = $(this).closest("tr").index();
-    var col = $(this).closest("td").index();
-    console.log("Changed: " + row + ", " + col);
-    if($(this).is('input')) {
-        editableTable.updateCell(row, col, $(this).val(), $(this).val());
+    // Listen for changes in text fields to update the table contents
+    $(document).on('change', '.' + CLASS_EDITING_TABLE_CELL, function() {
+        var row = $(this).closest("tr").index();
+        var col = $(this).closest("td").index();
+        console.log("Changed: " + row + ", " + col);
+        if($(this).is('input')) {
+            editableTable.updateCell(row, col, $(this).val(), $(this).val());
 
-    } else if($(this).is('option')) {
-        $selection = $(this).find("option:selected");
-        editableTable.updateCell(row, col, $selection.val(), $selection.text());
-    }
-
-});
-
-// Delete button in row
-$(document).on('click', '.' + CLASS_DELETE_BUTTON, function () {
-
-    // Get current row
-    var row = $(this).closest('tr').index;
-    editableTable.deleteRow(row);
-
-    $(this).text(TEXT_DELETE_BUTTON_DELETED);
-    $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
-});
-
-// Undelete button in row
-$(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
-    // Get current row
-    var row = $(this).closest('tr').index;
-    editableTable.deleteRow(row);
-
-    $(this).text(TEXT_DELETE_BUTTON_DELETED);
-    $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
-});
-
-$(document).on('click', '.' + CLASS_ADD_BUTTON, function() {
-    editableTable.createRow();
-});
-
-$(document).on('click', '.' + CLASS_SAVE_BUTTON, function () {
-    commitTableChanges();
-    // Make an AJAX request to commit rows to the DB
-});
-
-$(document).on('click', '.' + CLASS_RELOAD_BUTTON, function () {
-    var c = confirm("This will delete your changes. Are you sure?");
-    if(c) {
-        pageRequests.refreshPage();
-    }
-
-    // Make an AJAX request to commit rows to the DB
-});
-
-var commitRequestCounter;
-
-function commitTableChanges() {
-    // TODO show loading thing
-
-    // Count the requests needed to fulfill a commit
-    commitRequestCounter = 0;
-    for(rowState of pageData.rowStates) {
-        if(rowState != RowStateEnum.UNMODIFIED) {
-            commitRequestCounter++;
+        } else if($(this).is('select')) {
+            $selection = $(this).find("option:selected");
+            editableTable.updateCell(row, col, $selection.val(), $selection.text());
         }
-    }
 
-    if(commitRequestCounter == 0) {
-        alert("No changes to commit.");
-        return;
-    }
+    });
 
-    alert("Please wait for table to refresh.");
+    // Delete button in row
+    $(document).on('click', '.' + CLASS_DELETE_BUTTON, function () {
 
-    // Execute the requests
-    for(var i = 0; i < pageData.rowStates.length; i++) {
-        var rowState = pageData.rowStates[i];
-        var rowContent = pageData.tableContents[i];
+        // Get current row
+        var row = $(this).closest('tr').index();
+        console.log("Deleted: " + row);
+        editableTable.deleteRow(row);
 
-        switch (rowState) {
-            case RowStateEnum.DELETED:
-                commitDelete(rowContent);
-                break;
-            case RowStateEnum.UPDATED:
-                commitUpdate(rowContent);
-                break;
+        $(this).text(TEXT_DELETE_BUTTON_DELETED);
+        $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
+    });
+
+    // Undelete button in row
+    $(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
+        // Get current row
+        var row = $(this).closest('tr').index;
+        editableTable.deleteRow(row);
+
+        $(this).text(TEXT_DELETE_BUTTON_DELETED);
+        $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
+    });
+
+    $(document).on('click', '.' + CLASS_ADD_BUTTON, function() {
+        editableTable.createRow();
+    });
+
+    $(document).on('click', '.' + CLASS_SAVE_BUTTON, function () {
+        pageRequests.commitTableChanges();
+        // Make an AJAX request to commit rows to the DB
+    });
+
+    $(document).on('click', '.' + CLASS_RELOAD_BUTTON, function () {
+        var c = confirm("This will delete your changes. Are you sure?");
+        if(c) {
+            pageRequests.refreshPage();
         }
-    }
-}
 
-function commitDelete(rowContent) {
-    if(rowContent[0] != UNDEFINED_ITEM_VALUE) {
-        // Only delete if not a new row
-        console.log("Delete commit.");
-        $.ajax({
-            url : routesData.mainUrl + "/" + rowContent[0],
-            type : 'DELETE',
-            success : function(data) {
-                commitFinish();
-            },
-            error : function(request,error)
-            {
-                commitError(request);
-            }
-        });
-    } else {
-        commitFinish();
-    }
-}
-
-function commitUpdate(rowContent) {
-    // Build request data
-    var ajaxUpdateData = {};
-    for (var i = 1; i < routesData.columnParamNames.length; i++) {
-        var paramName = routesData.columnParamNames[i];
-        var paramVal = rowContent[i];
-        if(paramVal != NULL_ITEM_VALUE) {
-            ajaxUpdateData[paramName] = paramVal;
-        }
-    }
-
-    if(rowContent[0] != UNDEFINED_ITEM_VALUE) {
-        // If not a new row just update
-        console.log("Update commit.");
-        $.ajax({
-            url : routesData.mainUrl + "/" + rowContent[0],
-            type : 'POST',
-            data : ajaxUpdateData,
-            dataType: 'json',
-            success : function(data) {
-                commitFinish();
-            },
-            error : function(request,error)
-            {
-                commitError(request);
-            }
-        });
-
-    } else {
-        console.log("Create commit.");
-        // TODO need to get id back
-        // If a new row create first, then update
-        // Create
-        $.ajax({
-            url : routesData.mainUrl,
-            type : 'PUT',
-            success : function(data) {
-                // Update
-                commitFinish();
-                // alert("PUT result: "+JSON.stringify(data));
-                // $.ajax({
-                //     url : routesData.mainUrl + "/" + rowContent[0],
-                //     type : 'POST',
-                //     data : ajaxUpdateData,
-                //     dataType: 'json',
-                //     success : function(data) {
-                //         commitFinish();
-                //     },
-                //     error : function(request,error)
-                //     {
-                //         commitError(request);
-                //     }
-                // });
-            },
-            error : function(request,error)
-            {
-                commitError(request);
-            }
-        });
-    }
-}
-
-
-// Checks if all commits requests have been executed
-function commitFinish() {
-    commitRequestCounter--;
-    if(commitRequestCounter <= 0) {
-        ajaxRefreshTable();
-    }
-}
-
-function commitError(req) {
-    alert("Failed to commit: "+JSON.stringify(req));
-    ajaxRefreshTable();
-}
-
-
-// TODO Need something to listen for a change in editable field classes to update value in mem and mark color
-
-// TODO new function that takes cell of origin and intended marker -- marks row and sets visuals
-
-
-// TODO change stack
-
-var tableChangesArr = [];
-
-function pushChange(tableChange) {
-    tableChangesArr.push(tableChange);
-    applyTableChange(tableChange);
-}
-
-function popChange() {
-    var tableChange = tableChangesArr.pop();
-    applyTableChange(tableChange);
-}
-
-// Applies change to table contents
-function applyTableChange(tableChange) {
-
-}
-
-function flattenTableChanges() {
-
-}
+        // Make an AJAX request to commit rows to the DB
+    });
+});
