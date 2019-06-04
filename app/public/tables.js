@@ -48,7 +48,6 @@ const RowStateEnum = {
 // Functions for page AJAX requests
 function PageRequests() {
     this.commitRequestCounter = 0;
-    this.refreshRequestCounter = 0;
 
     var parent = this;
 
@@ -87,7 +86,6 @@ function PageRequests() {
 
 
     this.refreshPage = function() {
-        parent.refreshRequestCounter = pageData.tableColumns.length;
         // Fetch main data
         console.log("GET: " + pageData.mainRoute);
         $.ajax({
@@ -95,7 +93,8 @@ function PageRequests() {
             type : 'GET',
             success : function(res) {
                 pageData.setTableRows(res);
-                parent._refreshFinish();
+                editableTable.populate();
+                editableTable.loadStop(1000);
             },
             error : function(res, error)
             {
@@ -108,6 +107,7 @@ function PageRequests() {
         for(tableColumn of pageData.tableColumns) {
             if(tableColumn.columnMeta.fieldType == FieldTypeEnum.FOREIGN_KEY) {
                 console.log("GET: " + tableColumn.columnMeta.fkRoute);
+                editableTable.loadStart(0);
 
                 // Fixes annoying closure issue
                 var reqFunc = function(columnIndex) {
@@ -116,7 +116,9 @@ function PageRequests() {
                         type : 'GET',
                         success : function(res) {
                             pageData.setTableFKData(columnIndex, res);
-                            parent._refreshFinish();
+                            // Redraw
+                            editableTable.populate();
+                            editableTable.loadStop(1000);
                         },
                         error : function(res, error)
                         {
@@ -131,7 +133,7 @@ function PageRequests() {
     }
 
 
-    this._commitDelete = function(rowContent) {
+    this._commitDelete = function(tableRow) {
         if(tableRow.primaryKey != null) {
             // Only delete if not a new row
             console.log("Delete commit.");
@@ -151,13 +153,13 @@ function PageRequests() {
         }
     }
 
-    this._commitUpdate = function(rowContent) {
+    this._commitUpdate = function(tableRow) {
         if(tableRow.primaryKey != null) {
             // If not a new row just update
             var ajaxUpdateData = {};
             for(i = 0; i < pageData.tableColumns.length; i++) {
                 var key = pageData.tableColumns[i].columnMeta.keyName;
-                var value = rowContent.rawItems[i];
+                var value = tableRow.rawItems[i];
                 ajaxUpdateData[key] = value;
             }
 
@@ -198,14 +200,6 @@ function PageRequests() {
         if(parent.commitRequestCounter <= 0) {
             editableTable.loadStop(1000);
             pageRequests.refreshPage();
-        }
-    }
-
-    this._refreshFinish = function() {
-        parent.refreshRequestCounter--;
-        if(parent.refreshRequestCounter <= 0) {
-            editableTable.populate();
-            editableTable.loadStop(1000);
         }
     }
 
