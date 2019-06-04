@@ -682,11 +682,12 @@ $(document).ready(function() {
     // Undelete button in row
     $(document).on('click', '.' + CLASS_DELETE_BUTTON_DELETED, function () {
         // Get current row
-        var row = $(this).closest('tr').index;
+        var row = $(this).closest('tr').index();
+        console.log("Undeleted: " + row);
         editableTable.deleteRow(row);
 
-        $(this).text(TEXT_DELETE_BUTTON_DELETED);
-        $(this).removeClass(CLASS_DELETE_BUTTON).addClass(CLASS_DELETE_BUTTON_DELETED);
+        $(this).text(TEXT_DELETE_BUTTON);
+        $(this).removeClass(CLASS_DELETE_BUTTON_DELETED).addClass(CLASS_DELETE_BUTTON);
     });
 
     $(document).on('click', '.' + CLASS_ADD_BUTTON, function() {
