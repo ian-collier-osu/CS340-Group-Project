@@ -48,6 +48,7 @@ const RowStateEnum = {
 // Functions for page AJAX requests
 function PageRequests() {
     this.commitRequestCounter = 0;
+    this.refreshRequestCounter = 0;
 
     var parent = this;
 
@@ -86,6 +87,7 @@ function PageRequests() {
 
 
     this.refreshPage = function() {
+        parent.refreshRequestCounter = pageData.tableColumns.length;
         // Fetch main data
         console.log("GET: " + pageData.mainRoute);
         $.ajax({
@@ -93,6 +95,7 @@ function PageRequests() {
             type : 'GET',
             success : function(res) {
                 pageData.setTableRows(res);
+                parent._refreshFinish();
             },
             error : function(res, error)
             {
@@ -113,9 +116,7 @@ function PageRequests() {
                         type : 'GET',
                         success : function(res) {
                             pageData.setTableFKData(columnIndex, res);
-                            // Redraw
-                            editableTable.populate();
-                            editableTable.loadStop(1000);
+                            parent._refreshFinish();
                         },
                         error : function(res, error)
                         {
@@ -197,6 +198,14 @@ function PageRequests() {
         if(parent.commitRequestCounter <= 0) {
             editableTable.loadStop(1000);
             pageRequests.refreshPage();
+        }
+    }
+
+    this._refreshFinish = function() {
+        parent.refreshRequestCounter--;
+        if(parent.refreshRequestCounter <= 0) {
+            editableTable.populate();
+            editableTable.loadStop(1000);
         }
     }
 
