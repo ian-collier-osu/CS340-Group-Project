@@ -11,17 +11,278 @@
 \usepackage{multirow}       %Needed for spanning rows
 \usepackage{listings}
 \usepackage{algorithmic}
+\usepackage{ulem}
 
 \begin{document}
 
 Group 19 --- Michael Andrews and Ian Collier
-Project Step 1
+Final Version
+
+\section*{\textsc{url} for draft \textsc{html}}
+
+\texttt{www.iancollier.host}
 
 \section*{Outline}
 
-The project will be a simplified and abstracted view of an automotive suppply chain.  The selection of automobiles is arbitrary, and intended simply to make the relationships intuitive for the user.  The basic intent is to have a series of relationships that will allow the user to track parts suppliers, parts requirements, and orders in such a way that they can easily determine at any given time what supplies need to be procured, and at what price, to meet orders.
 
-\section*{Changes from Earlier Draft}
+The project is a simplified and abstracted view of an automotive suppply chain.  The selection of automobiles is arbitrary, and intended simply to make the relationships intuitive for the user.  The basic intent is to have a series of relationships that will allow the user to track parts suppliers, parts requirements, and orders in such a way that they can easily determine at any given time what supplies need to be procured, and at what price, to meet orders.
+
+\section*{Changes for Final Version}
+
+The default\textunderscore color key was removed from the trimlines table.  It proved infeasible to enforce a color that was a valid choice for the trimline; i.e. that the color referenced existed in a row in trimline\textunderscore colors which also referenced the trimline itself.  Rather than enforce this on the front-end, it was decided that having a default color simply did not add enough value to the app to justify the complexity.
+
+\section*{Feedback for Step 6 Draft}
+
+\begin{quotation}
+It looks like your site is nearly complete, congratulations! 
+ 
+A few things i noticed when tinkering with it (though you probably already know):
+ 
+\begin{itemize}
+\item Added items can't be edited
+
+\item Committing changes seems to only work sometimes
+
+\item Search doesn't look to be implemented more than just the alert box upon clicking search
+
+\end{itemize} 
+
+I like the option to "undelete" and I also like the use of alert boxes upon choosing to commit or reset to make sure the user knows what they are doing. 
+ 
+
+It looks like the site is on track for being a complete project in no time, good job!
+
+\end{quotation}
+
+---Story Caplan
+
+\begin{quotation}
+
+\begin{itemize}
+
+\item The page loading circle thing is cool. The site UI and look is simple and seems intuitive.
+\item           As Story mentioned, added items cannot be edited.
+           As Story mentioned, sometimes “commit changes” does not work. I received a popup error when attempting to commit changes on the Models page. When attempting to “commit changes” on the Colors and Trimlines pages, the pages got stuck loading.
+\item           I was not able to successfully access the parts page. It got stuck on loading the page.
+\item          The Search page is not working yet, as mentioned on the page.
+
+\end{itemize}
+
+Step 6 specific feedback:
+ 
+
+ \begin{itemize}
+ \item          The only pages where deleting appears to work are the Orders and Part Requirements pages.
+ \end{itemize}
+
+\end{quotation}
+
+For both of these reviews, these are issues we're aware of and intend to fix, by implementing searching and by bugfixing the others.
+
+\section*{Changes for Step 6 Draft}
+
+Additional front-end work, schema reconciled with changes, trimline\textunderscore colors rolled out.
+
+\section*{Feedback for Step 5 Draft}
+
+\begin{quotation}
+On the colors page, the edit seems to be working as intended.  However, when I try to add a new color, it doesn't show the name on the color after I commit the change.  Delete also seems to be working as intended.  I also tried adding to the models page, but I can't seem to pick a base trimline.
+\end{quotation}
+
+---Kendrick Chu
+
+\begin{quotation}
+I wanna start by saying i really love the feature that changes the edited field orange. I noticed you couldnt edit the Base Trimline of the Models, but besides that everything looks sweet!
+\end{quotation}
+
+---Zech DeCleene
+
+\begin{quotation}
+The way your team chose to implement the edit and delete functionality is so cool! I wouldn't have thought of keeping the item semi visible behind a crossed out line like that but I like the way it looks. Also the easily visible orange color to show edits is nice as well and really pops on the white background. As Zech mentioned the only thing I noticed was not being able to edit the base trimline.
+\end{quotation}
+
+---Story P. Caplan
+
+We are addressing the base trimline issue, and we intend for the final version to always show user-meaningful names rather than ids.
+
+\subsection*{Additional Changes for Step 5 Draft}
+
+We elected to add an integer id field to the color table, to make it easier to work with on the front end.
+
+
+\section*{Changes for Step 4 Draft}
+
+HTML reworked.  TA feedback was received on the due date of the draft as follows:
+
+\begin{quotation}
+missing forms providing functionalities to add to entities and relationships. I only found the button.
+
+Using a button on the bottom for saving the changes, is confusing.  If add item is pressed, it should have its own save button at the end of the form. If edit button is pressed, you can be changed to save so user knows, she should press it after editing.
+
+\end{quotation}
+
+This feedback came too late to incorporate into the draft version, so we'll work on it for the final version.
+
+A typo in the DDL was corrected, which was causing a foreign key in models to refer to a nonexistant table.
+
+
+\section*{Feedback on Step 4 Draft}
+
+\begin{quotation}
+
+I used the instructor provided example questions to do a review of your step 4 draft. My responses to the questions are in italics. (NB: They are reproduced here underlined.) I only checked the website at the provided link.
+ 
+CREATE functionalities
+
+Does the INSERT form actually work for entities and relationships, as required in the Specs?
+
+\emph{I did not see a clear indication that I can actually insert any data for any entities or relationships on the website. There does not appear to be any data insert form for any page.}
+
+Does INSERTing rows in the "M entity" of the 1-to-M relationship rows affect the INSERTing of rows in the "1 entity"?
+
+\emph{I did not see a clear indication that I can actually insert any data for any entities or relationships on the website.}
+
+Does INSERTing rows in the "M entity" of the M-to-M relationship rows affect the INSERTing of rows in the other "M entity"?
+
+\emph{I did not see a clear indication that I can actually insert any data for any entities or relationships on the website.}
+
+Can data be inserted for all entities?
+
+\emph{I did not see a clear indication that I can actually insert any data for any entities or relationships on the website.}
+
+Anything else that you think is important for the CREATE functionalities?
+
+\emph{Nothing comes to mind.}
+
+What could be the reasons and possible fixes if any of these don't work?
+
+\emph{My impression is that the team needs more time to implement the website code to support insert functionality.}
+
+READ functionalities
+
+Are rows being listed for all entities?
+
+\emph{Yes, all entity tables appear with data clearly shown.}
+
+Are rows being listed for all relationships, as described in the Specs?
+
+\emph{I did not see a clear indication that any relationship tables are displayed on the website. Specifically, I did not see on the website a way to view data and insert data into the Trimline Colors relationship table.}
+
+Is the Search OR filter functionality present and working?
+
+\emph{There is a form for filter functionality present, however, it does not appear to be operational in this draft.}
+
+Is there a better way that data could be displayed on these pages? OR Could the style of the webpage be improved?
+
+\emph{The tables available are displayed clearly. The tables may benefit from a bit more spacing between columns so that data is a little less scrunched together.}
+
+Anything else that you think is important for READ functionalities?
+
+\emph{Nothing comes to mind.}
+
+What could be the reasons and possible fixes if any of these don't work?
+
+\emph{My impression is that the team needs more time to implement the website code and more clearly present a means to view data and insert data into the Trimline Colors relationship table.}
+
+\end{quotation}
+---Ricardo Cousins
+
+
+
+\begin{quotation}
+
+It looks like your website is coming along great! I like the way that the edit button is implemented in Dynamic CRUD Table Demo. It feels clean and is very responsive. I had a lot of trouble getting that part to work for my group's website, and still am. I'm sure your aware but your add button only seems to activate an alert instead of actually giving the ability to add a new entry, and the delete button only greys out an entry as opposed to removing it, but if that's simply a design decision then it works fine. The search page also looks to only send out an alert at the moment but it looks to be coming along well. All of your delete, update, and additional queries look good too! I'm looking forward to the complete implementation.
+
+\end{quotation}
+
+---Story P. Caplan
+
+\begin{quotation}
+
+Looking over the website right now, it looks like you guys are still working on some stuff like my group is. The Dynamic CRUD Table Demo looks good from what I can see so far. I do like how fluid it is when you click on the Edit or Delete button. My group's update button is based off of the example provided by the instructor which takes the user to a different page to update the information. I like how yours allows the user to edit the content of the table in the same exact locations as it was displaying it before. I also like how the button changes to Finish when editing and how the Delete button gets grayed out after you click it.
+
+For the database tables, it looks like you guys have it all set up but need to switch those to the new format. I don't see a link or table to add keys to the Trimline Colors table. From the schema and outline, it appears that is an intermediate table between the many-to-many relationship of the tables Trimlines and Colors. My group is trying to implement our intermediate table using a dropdown menu so our many-to-many relationship can create connections. I looked in the ddl file and it appears that model colors SQL code is in there instead of the new table that replaced it.
+
+\end{quotation}
+
+---Ryan Alcorn
+
+\begin{quotation}
+
+Going over your dynamic CRUD demo I really like the way it is layed out. Like Ryan said above, it is pretty cool to not have the update or delete redirect away from the page and allow you to enter/alter those fields right then and there.
+
+I like how you can make all the edits and then save changes and make all the multiple edits save at once. I'm not sure how hard it would be to implement and it is definitely out of the scope of requirements, but it would be cool if there was an UNDO button that reset all the changes you made back to the original table. Say I accidentally hit the delete button, it gets grayed out and I can't use that field or bring it back, but an undo button could do that. Also, I have no idea how this would be done, but none the less you table is very cool.
+
+For your search bar, when you say "search by name" I am not quite sure what you are referring to or what I can actually search for. Does this mean I can search for any value in parts, orders, trim lines, and models? I am also curious how your add items will work. I may have already asked this last week. Will it create a table to fill or redirect to another page? Maybe you could leave an empty row below the currently filled table to enter data into.
+
+I am very curious to see what your webpage will look like when you progress a little farther along and add your CSS down the road. It's looking good and I am interested in seeing how this evolves once you finish implementing the rest of your Create and Read functionalities!
+
+\end{quotation}
+    
+---Russell Eck
+
+\begin{quotation}
+I'd have to agree with the others [Ryan and Russell]. Your CRUD table is fleshed out quite nicely and is a very user friendly approach
+
+Seems like most groups weren't able to fully implement the requirements this time. I definitely think that you guys have one of the best projects I've seen so far and might use some of your ideas in our own project.
+
+It's hard to fully review this step yet since CREATE and READ functionalities seem to not have been fully implemented, but everything else looks up to speed.
+
+\end{quotation}
+    
+---Humza Ahmed
+
+The missing Trimline-Colors table was a recurring theme, and it's a valid one.  Since that will require some restructing, there's a modified version of the DDL available, but it hasn't been rolled into the HTML yet, so that version of the DB is not live at present.
+
+\subsection*{Additional Changes for Step 5 Draft}
+
+We elected to add an integer id field to the color table, to make it easier to work with on the front end.
+
+\section*{Changes for Step 3 Draft}
+
+\begin{itemize}
+
+\item Key and table names have been changed to lower case, underscore separated.  Keys named 'key' have been changed to 'id' because MariaDB considers key a reserved word.
+
+\item Both attributes in model{\textunderscore}colors have had on delete cascade added to them.
+
+\item Trimline's default model now cascades on deletion.
+
+\item Trimline's default color now cascades to null on deletion.
+
+\end{itemize}
+
+\section*{Review Feedback on Step 3 Draft}
+
+Only one peer review had specific questions and changes; it's included below:
+
+\begin{itemize}
+
+\item "Your DDL file looks good. I was able to successfully import it into phpmyadmin with no errors or issues. I imported again after tables had been created and your drop table if exists statements also look good! Also the samples data was successfully inserted into the tables.
+
+"Looking at your HTML I see on your "Body" page that you have a search field. I know it is still early so you will probably make changes, but maybe specify what can be searched there. Only models? You could also throw and update table header and delete table header in your html table.
+
+"What will the "save changes" buttons do? Will that be a type of 'update' function? If I decide to change trimline and color on the drop downs on the Order page, will hitting save changes update it? Will it update only the ones that I have changed they drop down values or specific ones?
+
+"One question I have is about colors. The color name is the primary key but how are you handling potential duplicate colors being entered into the table?
+
+"I don't have any comments on your query file, everything looks good to me. You have all the insert, delete, and update statements needed as well as some really good query statements that I think will work really well with your database. Good job!
+
+With regard to colors, duplicates are not an issue.  Because a primary key needs to be unique, duplicates cannot be entered, and that's intended behavior.  A duplicate color would serve no purpose.
+
+With regard to what the update and save functions do, the intended behavior will be for update to populate a form with the fields of the item, and for save to commit the item back to the database, incorporating any (legal) changes that might have been made.  (The auto-incrementing keys will be reported, but will not be alterable.)
+
+With regard to the search behavior, a new page has been added with checkboxes to allow for searching any or all of Models, Trimlines, Orders, and Parts by name.
+
+\end{itemize}
+
+\section*{Changes for Step 3 Final}
+
+Dedicated search page added; queries added to support its behavior.
+
+
+
+\section*{Changes for Step 2}
 
 \begin{itemize}
 
@@ -33,24 +294,27 @@ The project will be a simplified and abstracted view of an automotive suppply ch
 
 \item The \textsc{erd} has been embiggened.
 
+\item The Base Model attribute of Model has had its name changed to Base Trimline rather than making it recursive; the previous name was a typo.
+
 \end{itemize}
+
 
 \section*{Entities}
 
 We will have the following entities:
 
-\subsection*{Models}
+\subsection*{models}
 The model represents a basic car model.  The intrinsic attributes it needs are:
 \begin{itemize}
-	\item \emph{Key}
+	\item \emph{id (Primary Key)}
 	
-	This should be an autoincrementing integer.	
+	This should be an autoincrementing integer.
 	
-	\item \emph{Name}
+	\item \emph{name}
 	
 	Each Model type needs name; this should be a 255 character max string.  It must not be the same as the name of any other Model, or of any Trimline.  It cannot be null.
 	
-	\item \emph{Base Trimline (Foreign Key)}
+	\item \emph{base{\textunderscore}trimline (Foreign Key)}
 	
 	Each Model must have a Trimline designated as its base version; this field cannot be null and must contain the key of a Trimline which exists in the database.  Consequently, this field will be an integer.
 	
@@ -59,105 +323,105 @@ The model represents a basic car model.  The intrinsic attributes it needs are:
 
 The other properties of cars will be simulated through relationships with other entities.
 
-\subsection*{Trimlines}
+\subsection*{trimlines}
 
 \begin{itemize}
-	\item \emph{Key}
+	\item \emph{id (Primary Key)}
 	
 	Each Trimline needs a key; this can be an autoincrementing integer. Cannot be null.
 	
-	\item \emph{Name}
+	\item \emph{name}
 	
 	Each Trimeline needs a name; this should be 255 character max string, and must not be the same as the name of any Model or any other Trimline.  Cannot be null.
 
-	\item \emph{Model (Foreign Key)}
+	\item \emph{model (Foreign Key)}
 	
-	Each Trimline must have exactly one Model associated with it; this field will store the key of that Model.  It cannot be null.
+	Each Trimline must have exactly one Model associated with it; this field will store the key of that Model.  It cannot be null.  This should cascade on deletion.
 	
-	\item \emph{Default Color (Foreign Key)}
-	
-	Each Trimline needs a default color.  30 character-max string, must be the key of a Color, cannot be null.
 
 \end{itemize}
 
-\subsection*{Colors}
+\subsection*{colors}
 
 \begin{itemize}
-	\item \emph	{Name}
-		Each color must have a unique name.  This should be a string, thirty characters maximum, must be unique, and cannot be null.  This can also serve as the key.
+	\item \emph{id (Primary Key)}
+		Autoincrementing integer.
+
+	\item \emph	{name}
+		Each color must have a unique name.  This should be a string, thirty characters maximum, must be unique, and cannot be null.
 		
 \end{itemize}
 
-\subsection*{Parts}
+\subsection*{parts}
 
 The part entity represents components, by SKU.
 
 \begin{itemize}
 
-\item \emph{Key}
+\item \emph{id (Primary Key)}
 
 	This should be an auto-incrementing integer.
 	
-\item \emph{Name}
+\item \emph{name}
 
 	This should be a 255 character string field, which does not need to be unique.
 	
-\item \emph{Quantity on Hand}
+\item \emph{quantity{\textunderscore}on{\textunderscore}hand}
 
 	This should be an integer, and should never be null.
 	
-\item \emph{Cost}
+\item \emph{cost}
 
 	This should be an integer, and can be null. (If a part has become unavailable.)
 	
 \end{itemize}
 
-\subsection*{PartRequirements}
+\subsection*{part{\textunderscore}requirements}
 
 This entity will hold tuples indicating how many of each type of part a given model or trimline requires.  (A specific trimline may require additional parts that the underlying model does not; for example, a luxury model might require a fancy GPS while the base model gets an Etch-a-Sketch and a road atlas from \oldstylenums{1962}.)
 
 \begin{itemize}
 
-\item \emph{Key}
+\item \emph{id (Primary Key)}
 	This should be an autoincrementing integer.
 	
-\item \emph{Associated Model (Foreign Key)}
+\item \emph{associated{\textunderscore}model (Foreign Key)}
 	This should be the key of the Model to which the tuple applies.  Integer, can be null if and only if Associated Trimline is not null, must exist in DB if not null.
 	
-\item \emph{Associated Trimline (Foreign Key)}
+\item \emph{associated{\textunderscore}trimline (Foreign Key)}
 	This should be the key of the Trimline to which the tuple applies.  Integer, can be null if and only if Associated Model is not null, must exist in DB if not null.
 	
-\item \emph{Associated Part (Foreign Key)}
+\item \emph{associated{\textunderscore}part (Foreign Key)}
 
 	This should be the key of the part with which the tuple is associated.  Integer, cannot be null, must exist in DB.
 	
-\item \emph{Quantity}
+\item \emph{quantity}
 
 	This should be the quantity of the part needed for the pairing; must be an integer, must be at least one, cannot be null.
 
 	
 \end{itemize}
 
-\subsection*{Order}
+\subsection*{orders}
 
 This represents an actual order for a vehicle.  We'll abstract the customer details to just a name; the jerks can come pick it up at the factory.
 
 \begin{itemize}
 
-\item \emph{Key}
+\item \emph{id}
 	This should be an autoincrementing integer; it will represent the order number, so maybe we'll start it off at like 5 million so it looks like we're more successful than we are.
 
-\item \emph{Customer}
+\item \emph{customer}
 
 	The name of the customer; 255 character string, cannot be null, does not need to be unique.
 	
-\item \emph{Trimline (Foreign Key)}
+\item \emph{trimline (Foreign Key)}
 	
 	The key of a Trimline; cannot be null and must exist in the database.
 	
-\item \emph{Color (Foreign Key)}
+\item \emph{color (Foreign Key)}
 
-	The color desired by the customer.  Thirty character string, cannot be null, must be the key of a Color which has a row in ModelColors corresponding to the Model corresponding to the desired Trimline.  (e.g., the customer wants a Trimline called a Thuggee in Blue.  The Thuggee is a trimline of Dacoity; ModelColors does not have a row for the Dacoity in Blue.  The order is invalid.)
+	The color desired by the customer.  Integer, cannot be null, must be the key of a Color which has a row in ModelColors corresponding to the Model corresponding to the desired Trimline.  (e.g., the customer wants a Trimline called a Thuggee in Blue.  The Thuggee is a trimline of Dacoity; ModelColors does not have a row for the Dacoity in Blue.  The order is invalid.)
 	
 \end{itemize}
 
@@ -169,9 +433,9 @@ This is already complicated enough, so we won't worry about when the customer wa
 
 Each model must have at least one Trimline, and can have as many as needed.  Each Trimline is associated with one and only one Model. This is a one-to-many relationship.
 
-\subsection*{Models have Colors}
+\subsection*{Trimlines have Colors}
 
-Each model must be available in at least one color, but can be available in as many as needed.  This is a many-to-many relationship.
+Each trimline must be available in at least one color, but can be available in as many as needed.  This is a many-to-many relationship.
 
 \subsection*{Models need Parts}
 
@@ -198,7 +462,7 @@ Each order must specify a Color which must be available for the Model associated
 \section*{Schema}
 
 \begin{figure}[H]
-	\centerline{\includegraphics[scale=.55]{schema.png}}
+	\centerline{\includegraphics[scale=.6]{schema.png}}
 \end{figure}
 
 
