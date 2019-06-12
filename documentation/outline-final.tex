@@ -12,6 +12,7 @@
 \usepackage{listings}
 \usepackage{algorithmic}
 \usepackage{ulem}
+\usepackage[most]{tcolorbox}
 
 \begin{document}
 
@@ -33,6 +34,7 @@ The default\textunderscore color key was removed from the trimlines table.  It p
 
 \section*{Feedback for Step 6 Draft}
 
+\begin{tcolorbox}[breakable, enhanced]
 \begin{quotation}
 It looks like your site is nearly complete, congratulations! 
  
@@ -55,8 +57,10 @@ It looks like the site is on track for being a complete project in no time, good
 \end{quotation}
 
 ---Story Caplan
+\end{tcolorbox}
 
-\begin{quotation}
+
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 
 \begin{itemize}
 
@@ -75,7 +79,7 @@ Step 6 specific feedback:
  \item          The only pages where deleting appears to work are the Orders and Part Requirements pages.
  \end{itemize}
 
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 
 For both of these reviews, these are issues we're aware of and intend to fix, by implementing searching and by bugfixing the others.
 
@@ -85,21 +89,21 @@ Additional front-end work, schema reconciled with changes, trimline\textundersco
 
 \section*{Feedback for Step 5 Draft}
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 On the colors page, the edit seems to be working as intended.  However, when I try to add a new color, it doesn't show the name on the color after I commit the change.  Delete also seems to be working as intended.  I also tried adding to the models page, but I can't seem to pick a base trimline.
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 
 ---Kendrick Chu
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 I wanna start by saying i really love the feature that changes the edited field orange. I noticed you couldnt edit the Base Trimline of the Models, but besides that everything looks sweet!
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 
 ---Zech DeCleene
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 The way your team chose to implement the edit and delete functionality is so cool! I wouldn't have thought of keeping the item semi visible behind a crossed out line like that but I like the way it looks. Also the easily visible orange color to show edits is nice as well and really pops on the white background. As Zech mentioned the only thing I noticed was not being able to edit the base trimline.
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 
 ---Story P. Caplan
 
@@ -114,12 +118,12 @@ We elected to add an integer id field to the color table, to make it easier to w
 
 HTML reworked.  TA feedback was received on the due date of the draft as follows:
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 missing forms providing functionalities to add to entities and relationships. I only found the button.
 
 Using a button on the bottom for saving the changes, is confusing.  If add item is pressed, it should have its own save button at the end of the form. If edit button is pressed, you can be changed to save so user knows, she should press it after editing.
 
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 
 This feedback came too late to incorporate into the draft version, so we'll work on it for the final version.
 
@@ -128,7 +132,7 @@ A typo in the DDL was corrected, which was causing a foreign key in models to re
 
 \section*{Feedback on Step 4 Draft}
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 
 I used the instructor provided example questions to do a review of your step 4 draft. My responses to the questions are in italics. (NB: They are reproduced here underlined.) I only checked the website at the provided link.
  
@@ -184,30 +188,30 @@ What could be the reasons and possible fixes if any of these don't work?
 
 \emph{My impression is that the team needs more time to implement the website code and more clearly present a means to view data and insert data into the Trimline Colors relationship table.}
 
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 ---Ricardo Cousins
 
 
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 
 It looks like your website is coming along great! I like the way that the edit button is implemented in Dynamic CRUD Table Demo. It feels clean and is very responsive. I had a lot of trouble getting that part to work for my group's website, and still am. I'm sure your aware but your add button only seems to activate an alert instead of actually giving the ability to add a new entry, and the delete button only greys out an entry as opposed to removing it, but if that's simply a design decision then it works fine. The search page also looks to only send out an alert at the moment but it looks to be coming along well. All of your delete, update, and additional queries look good too! I'm looking forward to the complete implementation.
 
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 
 ---Story P. Caplan
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 
 Looking over the website right now, it looks like you guys are still working on some stuff like my group is. The Dynamic CRUD Table Demo looks good from what I can see so far. I do like how fluid it is when you click on the Edit or Delete button. My group's update button is based off of the example provided by the instructor which takes the user to a different page to update the information. I like how yours allows the user to edit the content of the table in the same exact locations as it was displaying it before. I also like how the button changes to Finish when editing and how the Delete button gets grayed out after you click it.
 
 For the database tables, it looks like you guys have it all set up but need to switch those to the new format. I don't see a link or table to add keys to the Trimline Colors table. From the schema and outline, it appears that is an intermediate table between the many-to-many relationship of the tables Trimlines and Colors. My group is trying to implement our intermediate table using a dropdown menu so our many-to-many relationship can create connections. I looked in the ddl file and it appears that model colors SQL code is in there instead of the new table that replaced it.
 
-\end{quotation}
+\end{quotation} \end{tcolorbox}
 
 ---Ryan Alcorn
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 
 Going over your dynamic CRUD demo I really like the way it is layed out. Like Ryan said above, it is pretty cool to not have the update or delete redirect away from the page and allow you to enter/alter those fields right then and there.
 
@@ -217,18 +221,18 @@ For your search bar, when you say "search by name" I am not quite sure what you 
 
 I am very curious to see what your webpage will look like when you progress a little farther along and add your CSS down the road. It's looking good and I am interested in seeing how this evolves once you finish implementing the rest of your Create and Read functionalities!
 
-\end{quotation}
+\end{quotation} \end{tcolorbox}
     
 ---Russell Eck
 
-\begin{quotation}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation}
 I'd have to agree with the others [Ryan and Russell]. Your CRUD table is fleshed out quite nicely and is a very user friendly approach
 
 Seems like most groups weren't able to fully implement the requirements this time. I definitely think that you guys have one of the best projects I've seen so far and might use some of your ideas in our own project.
 
 It's hard to fully review this step yet since CREATE and READ functionalities seem to not have been fully implemented, but everything else looks up to speed.
 
-\end{quotation}
+\end{quotation} \end{tcolorbox}
     
 ---Humza Ahmed
 
@@ -256,9 +260,9 @@ We elected to add an integer id field to the color table, to make it easier to w
 
 Only one peer review had specific questions and changes; it's included below:
 
-\begin{itemize}
+\begin{tcolorbox}[breakable, enhanced] \begin{quotation} 
 
-\item "Your DDL file looks good. I was able to successfully import it into phpmyadmin with no errors or issues. I imported again after tables had been created and your drop table if exists statements also look good! Also the samples data was successfully inserted into the tables.
+"Your DDL file looks good. I was able to successfully import it into phpmyadmin with no errors or issues. I imported again after tables had been created and your drop table if exists statements also look good! Also the samples data was successfully inserted into the tables.
 
 "Looking at your HTML I see on your "Body" page that you have a search field. I know it is still early so you will probably make changes, but maybe specify what can be searched there. Only models? You could also throw and update table header and delete table header in your html table.
 
@@ -268,13 +272,14 @@ Only one peer review had specific questions and changes; it's included below:
 
 "I don't have any comments on your query file, everything looks good to me. You have all the insert, delete, and update statements needed as well as some really good query statements that I think will work really well with your database. Good job!
 
+\end{quotation} \end{tcolorbox}
+
 With regard to colors, duplicates are not an issue.  Because a primary key needs to be unique, duplicates cannot be entered, and that's intended behavior.  A duplicate color would serve no purpose.
 
 With regard to what the update and save functions do, the intended behavior will be for update to populate a form with the fields of the item, and for save to commit the item back to the database, incorporating any (legal) changes that might have been made.  (The auto-incrementing keys will be reported, but will not be alterable.)
 
 With regard to the search behavior, a new page has been added with checkboxes to allow for searching any or all of Models, Trimlines, Orders, and Parts by name.
 
-\end{itemize}
 
 \section*{Changes for Step 3 Final}
 
