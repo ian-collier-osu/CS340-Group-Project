@@ -213,7 +213,7 @@ app.put('/Trimlines', function(req,res,next){
 });
 
 app.post('/Trimlines/:id', function(req,res,next){
-    Queries.trimlines.updateOne(con, queryCallback(res), [req.body.name, req.body.model, req.body.default_color, req.params.id]);
+    Queries.trimlines.updateOne(con, queryCallback(res), [req.body.name, req.body.model, req.params.id]);
 });
 
 app.delete('/Trimlines/:id', function(req,res,next){

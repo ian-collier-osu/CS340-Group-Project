@@ -17,7 +17,7 @@ exports.createOne = function(con, cb, params) {
 }
 
 exports.createEmpty = function(con, cb, params) {
-    con.query("INSERT INTO colors (name) VALUES ('');", function(err, rows) {
+    con.query("INSERT INTO colors (name) VALUES ('??');", function(err, rows) {
       cb(rows, err);
     });
 }

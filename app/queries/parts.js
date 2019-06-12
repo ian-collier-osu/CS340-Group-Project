@@ -17,7 +17,7 @@ exports.createOne = function(con, cb, params) {
 }
 
 exports.createEmpty = function(con, cb, params) {
-    con.query("INSERT INTO parts (name, quantity_on_hand, cost) VALUES ('', 0, 0);", function(err, rows) {
+    con.query("INSERT INTO parts (name, quantity_on_hand, cost) VALUES ('??', 0, 0);", function(err, rows) {
       cb(rows, err);
     });
 }

@@ -43,21 +43,36 @@ const RowStateEnum = {
     // Note - all creates are handled under UPDATED
 }
 
+const CommitTypeEnum = {
+    CREATE: 0,
+    UPDATE: 1,
+    DELETE: 2
+}
+
+function CommitRequest(label, type) {
+    this.label = label;
+    this.type = type;
+}
+
+
+
 // -- Object definitions --
 
 // Functions for page AJAX requests
 function PageRequests() {
-    this.commitRequestCounter = 0;
+    this.commitRequestStack = [];
 
     var parent = this;
 
     this.commitTableChanges = function() {
+        // Keeps track of loading types, for err handling
+        parent.commitRequestStack = [];
 
         // Count the requests needed to fulfill a commit
-        parent.commitRequestCounter = 0;
+        var commitRequestCounter = [];
         for(tableRow of pageData.tableRows) {
             if(tableRow.rowState != RowStateEnum.UNMODIFIED) {
-                parent.commitRequestCounter++;
+                commitRequestCounter++;
             }
         }
 
@@ -137,6 +152,7 @@ function PageRequests() {
         if(tableRow.primaryKey != null) {
             // Only delete if not a new row
             console.log("Delete commit.");
+            parent.commitRequestStack.push(new CommitRequest(tableRow.displayedItems[0], CommitTypeEnum.DELETE));
             $.ajax({
                 url : routesData.mainUrl + "/" + tableRow.primaryKey,
                 type : 'DELETE',
@@ -164,6 +180,7 @@ function PageRequests() {
             }
 
             console.log("Update commit.");
+            parent.commitRequestStack.push(new CommitRequest(tableRow.displayedItems[0], CommitTypeEnum.UPDATE));
             $.ajax({
                 url : routesData.mainUrl + "/" + tableRow.primaryKey,
                 type : 'POST',
@@ -180,6 +197,7 @@ function PageRequests() {
 
         } else {
             console.log("Create commit.");
+            parent.commitRequestStack.push(new CommitRequest(tableRow.displayedItems[0], CommitTypeEnum.CREATE));
             // Create
             $.ajax({
                 url : routesData.mainUrl,
@@ -196,8 +214,8 @@ function PageRequests() {
     }
 
     this._commitFinish = function() {
-        parent.commitRequestCounter--;
-        if(parent.commitRequestCounter <= 0) {
+        parent.commitRequestStack.pop();
+        if(parent.commitRequestStack.length <= 0) {
             editableTable.loadStop(1000);
             pageRequests.refreshPage();
         }
@@ -211,9 +229,21 @@ function PageRequests() {
     }
 
     this._commitError = function(res) {
-        alert("Server error: Failed to commit.");
+        var requestItem = parent.commitRequestStack.pop();
+        switch (requestItem.type) {
+            case CommitTypeEnum.DELETE:
+                alert("Error: Failed to delete row '" + requestItem.label + "'. Is this referenced by another table?");
+                break;
+            case CommitTypeEnum.UPDATE:
+                alert("Error: Failed to update row '" + requestItem.label + "'. Were the entered values valid?");
+            case CommitTypeEnum.CREATE:
+                alert("Error: Failed to create a new row.");
+            default:
+                alert("Error: Unknown error occured.");
+        }
         console.log(JSON.stringify(res));
         editableTable.loadStop(1000);
+        location.reload();
     }
 }
 
@@ -292,9 +322,10 @@ function PageData() {
             // Add all rows from response to table
             for(responseRow of responseData) {
                 var rawItems = [];
+                var displayItems = [];
                 var primaryKeyVal;
 
-                // Map each row's values to an array
+                // Map each rows values to an array
                 Object.keys(responseRow).forEach(function(key) {
                     var responseItem = responseRow[key];
 
@@ -302,13 +333,16 @@ function PageData() {
                     if(key != parent.primaryKey) {
                         if(responseItem == null) responseItem = NULL_ITEM_VALUE;
                         rawItems.push(responseItem);
+                        displayItems.push(responseItem);
                     } else {
                         primaryKeyVal = responseItem;
                     }
                 });
 
+
+
                 // Add a new row
-                parent.tableRows.push(new TableRow(primaryKeyVal, rawItems, rawItems, false))
+                parent.tableRows.push(new TableRow(primaryKeyVal, displayItems, rawItems, false))
             }
         }
     }
@@ -331,6 +365,7 @@ function PageData() {
                 tableColumn.fkDict[responseRow[tableColumn.columnMeta.fkKey]] = responseRow[tableColumn.columnMeta.fkValue];
             }
         }
+
         console.log("Column " + columnIndex + " foreign keys: " + JSON.stringify(tableColumn.fkDict));
         // For each row set col to proper display val
         for(tableRow of parent.tableRows) {
@@ -342,7 +377,9 @@ function PageData() {
                 tableRow.displayedItems[columnIndex] = UNDEFINED_ITEM_VALUE;
             }
         }
+
     }
+
 
     // Creates and returns empty row, returns index of
     this.addEmptyRow = function() {
@@ -353,7 +390,7 @@ function PageData() {
 
             switch(fieldType) {
                 case FieldTypeEnum.TEXT:
-                    newRowItem = "";
+                    newRowItem = "?";
                     break;
                 case FieldTypeEnum.NUMBER:
                     newRowItem = 0;
@@ -578,6 +615,8 @@ function EditableTable() {
         var tableRow = pageData.tableRows[row];
         tableRow.rawItems[col] = rawValue;
         tableRow.displayedItems[col] = displayValue;
+        console.log("Displayed: " + JSON.stringify(tableRow.displayedItems));
+        console.log("Raw: " + JSON.stringify(tableRow.rawItems));
         tableRow.rowState = RowStateEnum.UPDATED;
     }
 
