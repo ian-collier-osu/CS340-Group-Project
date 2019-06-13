@@ -153,7 +153,7 @@ app.get('/OrdersTable',function(req,res){
 
 app.get('/SearchPage', function(req, res){
   var context = {
-      pageTitle: "Search"
+      pageTitle: "Search By Name"
   };
   res.render('search', context);
 });
@@ -294,8 +294,20 @@ app.delete('/Orders/:id', function(req,res,next){
 
 // Search
 
-app.get('/Search/:customerName', function(req, res, next){
-    Queries.misc.searchCustomer(con, queryCallback(res), [req.params.customerName]);
+app.get('/SearchOrders/:name', function(req, res, next){
+    Queries.misc.searchCustomer(con, queryCallback(res), [req.params.name]);
+});
+
+app.get('/SearchParts/:name', function(req, res, next){
+    Queries.misc.searchParts(con, queryCallback(res), [req.params.name]);
+});
+
+app.get('/SearchTrimlines/:name', function(req, res, next){
+    Queries.misc.searchTrimlines(con, queryCallback(res), [req.params.name]);
+});
+
+app.get('/SearchModels/:name', function(req, res, next){
+    Queries.misc.searchModels(con, queryCallback(res), [req.params.name]);
 });
 
 /* Error routes */

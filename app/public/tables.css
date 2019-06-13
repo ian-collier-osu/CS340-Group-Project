@@ -27,3 +27,7 @@ td {
 table {
     border-collapse: collapse;
 }
+
+thead {
+    font-weight: bold;
+}

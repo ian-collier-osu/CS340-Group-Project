@@ -1,10 +1,62 @@
 <form>
   <input type="text" id="searchString"><br/>
-  Search in Parts <input type="checkbox" name="tables" value="Parts"><br/>
-  Search in Orders <input type="checkbox" name="tables" value="Orders"><br/>
-  Search in Trimlines <input type="checkbox" name="tables" value="Trimlines"><br/>
-  Search in Models<input type="checkbox" name="tables" value="Models"></br>
-  <button type="button" id="searchButton">Submit!</button>
+  <button type="button" id="searchButton">Go!</button>
 </form>
+<br>
+<br>
+
+<b>In Orders</b>
+<br>
+<table id="searchOrdersTable">
+    <thead>
+        <tr>
+            <td><i>Customer Name</i></td>
+            <td>Model</td>
+            <td>Trimline</td>
+            <td>Color</td>
+            <td>Part Cost</td>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br>
+
+<b>In Parts</b>
+<br>
+<table id="searchPartsTable">
+    <thead>
+        <tr>
+            <td><i>Part Name</i></td>
+            <td>Quantity On Hand</td>
+            <td>Cost</td>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br>
+
+<b>In Trimlines</b>
+<br>
+<table id="searchTrimlinesTable">
+    <thead>
+        <tr>
+            <td><i>Trimline Name</i></td>
+            <td>Model</td>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br>
+
+<b>In Models</b>
+<br>
+<table id="searchModelsTable">
+    <thead>
+        <tr>
+            <td><i>Color Name</i></td>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
 
 <script src="/public/search.js"></script>
