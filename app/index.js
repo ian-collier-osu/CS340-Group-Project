@@ -151,7 +151,7 @@ app.get('/OrdersTable',function(req,res){
     res.render('table', context);
 });
 
-app.get('/Search', function(req, res){
+app.get('/SearchPage', function(req, res){
   var context = {
       pageTitle: "Search"
   };

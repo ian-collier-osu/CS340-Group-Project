@@ -4,6 +4,14 @@
 
 // -- Const vars --
 
+// Known bugs:
+
+// Drop downs on new rows dont auto change when Clicked
+// No changes doesnt work sometimes, try making a row blank then committing
+// Orders page update error
+// Colors page name update doesnt work
+// Need trimline colors page
+
 // Edit row
 const TEXT_EDIT_BUTTON_EDITING = "Finish";
 const CLASS_EDIT_BUTTON_EDITING = "table-row-btn-stop-edit";
@@ -700,7 +708,9 @@ $(document).ready(function() {
         var col = $(this).closest("td").index();
         console.log("Changed: " + row + ", " + col);
         if($(this).is('input')) {
-            editableTable.updateCell(row, col, $(this).val(), $(this).val());
+            if($(this).val() !== "") {
+                editableTable.updateCell(row, col, $(this).val(), $(this).val());
+            }
 
         } else if($(this).is('select')) {
             $selection = $(this).find("option:selected");
