@@ -10,3 +10,18 @@ exports.searchCustomer = function(con, cb, params) {
         cb(rows, err);
       });
 }
+
+exports.searchParts = function(con, cb, params) {
+    con.query(`select id, name, quantity_on_hand, cost FROM parts WHERE name LIKE "%?%";`, params, function(err, rows){
+      cb(rows, err);
+    });
+}
+
+exports.searchTrimlines = function(con, cb, params) {
+  con.query(`SELECT t.id, t.name, t.model, FROM trimlines t
+    WHERE t.name LIKE "%?%";`)
+}
+
+exports.searchModels = function(con, cb, params) {
+  con.query(`select m.id, m.name FROM models m WHERE m.name LIKE '%?%';`)
+}

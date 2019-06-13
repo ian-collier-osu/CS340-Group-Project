@@ -7,7 +7,7 @@ INSERT INTO models (name, base_trimline) VALUES (:name_in, :trimline_in);
 
 --Insert a new trimline
 
-INSERT INTO trimlines (name, model, default_color) VALUES (:name_in, :model_in, color_in);
+INSERT INTO trimlines (name, model) VALUES (:name_in, :model_in);
 
 --Insert a new color
 
@@ -137,8 +137,7 @@ SELECT id, name, base_trimline FROM models where name LIKE "%:nameinput%";
 
 --Trimline
 
-SELECT t.id, t.name, t.model, c.name AS `default color` FROM trimlines t
-  INNER JOIN colors c ON t.default_color = c.id
+SELECT t.id, t.name, t.model FROM trimlines t
   WHERE t.name LIKE "%:nameinput%";
 
 --Part
