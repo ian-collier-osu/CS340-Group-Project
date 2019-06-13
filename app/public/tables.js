@@ -186,6 +186,7 @@ function PageRequests() {
                 var value = tableRow.rawItems[i];
                 ajaxUpdateData[key] = value;
             }
+            console.log("Updating " + tableRow.primaryKey + ": " + JSON.stringify(ajaxUpdateData));
 
             console.log("Update commit.");
             parent.commitRequestStack.push(new CommitRequest(tableRow.displayedItems[0], CommitTypeEnum.UPDATE));

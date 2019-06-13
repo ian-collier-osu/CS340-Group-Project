@@ -165,9 +165,10 @@ DROP TABLE IF EXISTS `trimline_colors`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `trimline_colors` (
-  `color` int(11) NOT NULL,
-  `trimline` int(11) NOT NULL,
-  PRIMARY KEY (`color`,`trimline`),
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `color` int(11),
+  `trimline` int(11),
+  PRIMARY KEY (`id`),
   KEY `trimline_colors_ibfk_2` (`trimline`),
   CONSTRAINT `trimline_colors_ibfk_1` FOREIGN KEY (`color`) REFERENCES `colors` (`id`) ON DELETE CASCADE,
   CONSTRAINT `trimline_colors_ibfk_2` FOREIGN KEY (`trimline`) REFERENCES `trimlines` (`id`) ON DELETE CASCADE
@@ -180,7 +181,7 @@ CREATE TABLE `trimline_colors` (
 
 LOCK TABLES `trimline_colors` WRITE;
 /*!40000 ALTER TABLE `trimline_colors` DISABLE KEYS */;
-INSERT INTO `trimline_colors` VALUES (8,1),(9,1),(9,3),(10,3),(11,1),(12,3);
+INSERT INTO `trimline_colors` VALUES (0, 8,1),(1, 9,1),(2, 9,3),(3, 10,3),(4, 11,1),(5, 12,3);
 /*!40000 ALTER TABLE `trimline_colors` ENABLE KEYS */;
 UNLOCK TABLES;
 

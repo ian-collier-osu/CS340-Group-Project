@@ -119,6 +119,14 @@ app.get('/TrimlinesTable',function(req,res){
     res.render('table', context);
 });
 
+app.get('/TrimlineColorsTable',function(req,res){
+    var context = {
+        pageTitle: "Trimline Colors",
+        tableMetaFile: "trimlinecolors.js"
+    };
+    res.render('table', context);
+});
+
 app.get('/ColorsTable',function(req,res){
     var context = {
         pageTitle: "Colors",
@@ -169,6 +177,7 @@ var Queries = {
     partRequirements: require('./queries/partrequirements.js'),
     colors: require('./queries/colors.js'),
     orders: require('./queries/orders.js'),
+    trimlineColors: require('./queries/trimlinecolors.js'),
     misc: require('./queries/misc.js')
 }
 
@@ -200,6 +209,24 @@ app.post('/Models/:id', function(req,res,next){
 
 app.delete('/Models/:id', function(req,res,next){
     Queries.models.deleteOne(con, queryCallback(res), [req.params.id]);
+});
+
+// Trimline colors
+
+app.get('/TrimlineColors',function(req,res,next){
+    Queries.trimlineColors.readAll(con, queryCallback(res));
+});
+
+app.put('/TrimlineColors', function(req,res,next){
+    Queries.trimlineColors.createEmpty(con, queryCallback(res));
+});
+
+app.post('/TrimlineColors/:id', function(req,res,next){
+    Queries.trimlineColors.updateOne(con, queryCallback(res), [req.body.color, req.body.trimline, req.params.id]);
+});
+
+app.delete('/TrimlineColors/:id', function(req,res,next){
+    Queries.trimlineColors.deleteOne(con, queryCallback(res), [req.params.id]);
 });
 
 // Trimlines
